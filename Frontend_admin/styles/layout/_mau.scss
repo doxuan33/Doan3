@@ -1,0 +1,207 @@
+.container-categories {
+	display: flex;
+	flex-wrap: wrap; /* Cho phép xuống dòng nếu không đủ chỗ */
+	gap: 2rem;
+	justify-content: center;
+	max-width: 900px; /* Đảm bảo 3 card mỗi hàng */
+	margin: 0 auto; /* Căn giữa */
+}
+.card-category {
+	position: relative;
+	width: calc(33.33% - 1.5rem); /* Chia đều cho 3 card */
+	max-width: 270px; /* Đảm bảo kích thước tối đa */
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	transition: transform 0.3s ease;
+}
+  
+  .card-category:hover {
+	transform: scale(1.05); /* Hiệu ứng phóng to nhẹ */
+  }
+  
+  /* Hình ảnh */
+  .template-img {
+	width: 100%;
+	height: auto;
+	border-radius: 10px;
+  }
+  
+  /* Nhãn miễn phí - Luôn hiển thị góc trái trên */
+  .badge-free {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	background: rgba(81, 187, 81, 0.801);
+	color: white;
+	padding: 6px 10px;
+	font-size: 12px;
+	font-weight: bold;
+	border-radius: 5px;
+  }
+  
+  /* Overlay - Hiển thị khi hover */
+  .overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5); /* Làm tối */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+  }
+  
+  .card-category:hover .overlay {
+	opacity: 1;
+  }
+  
+  /* Nút PowerPoint */
+  .download-btn {
+	background: orange;
+	color: white;
+	border: none;
+	padding: 8px 14px;
+	font-size: 14px;
+	border-radius: 5px;
+	cursor: pointer;
+  }
+  
+  /* Tiêu đề - Hiển thị dưới khi hover */
+  .template-title {
+	text-align: center;
+	font-size: 16px;
+	font-weight: bold;
+	padding: 10px;
+	position: absolute;
+	bottom: 10px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 100%;
+	color: white;
+	padding: 10px;
+	border-radius: 5px;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+  }
+  
+  .card-category:hover .template-title {
+	opacity: 1;
+  }
+  @media (max-width: 900px) {
+	.card-category {
+		width: calc(50% - 1rem); /* 2 card mỗi hàng trên màn hình nhỏ hơn */
+	}
+}
+
+@media (max-width: 600px) {
+	.card-category {
+		width: 100%; /* 1 card mỗi hàng trên màn hình nhỏ */
+	}
+}
+.content-data {
+    flex-grow: 1;
+    flex-basis: 400px;
+    padding: 20px;
+    background: var(--light);
+    border-radius: 10px;
+    box-shadow: 4px 4px 16px rgba(0, 0, 0, .1);
+}
+.chat-box {
+    width: 100%;
+    max-height: 360px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+.chat-box::-webkit-scrollbar {
+    display: none;
+}
+.chat-box .day {
+    text-align: center;
+    margin-bottom: 10px;
+}
+.chat-box .day span {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: var(--light-blue);
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 600;
+}
+.chat-box .msg img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.chat-box .msg {
+    display: flex;
+    grid-gap: 6px;
+    align-items: flex-start;
+}
+.chat-box .profile .username {
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-block;
+    margin-right: 6px;
+}
+.chat-box .profile .time {
+    font-size: 12px;
+    color: var(--dark-grey);
+}
+.chat-box .chat p {
+    font-size: 14px;
+    padding: 6px 10px;
+    display: inline-block;
+    max-width: 400px;
+    line-height: 150%;
+}
+.chat-box .msg:not(.me) .chat p {
+    border-radius: 0 5px 5px 5px;
+    background: var(--blue);
+    color: var(--light);
+}
+.chat-box .msg.me {
+    justify-content: flex-end;
+}
+.chat-box .msg.me .profile {
+    text-align: right;
+}
+.chat-box .msg.me p {
+    background: var(--grey);
+    border-radius: 5px 0 5px 5px;
+}
+.form {
+    margin-top: 6px;
+}
+.form-group {
+    width: 100%;
+    display: flex;
+    grid-gap: 10px;
+}
+.form-group input {
+    flex-grow: 1;
+    padding: 10px 16px;
+    border-radius: 5px;
+    outline: none;
+    background: var(--grey);
+    border: none;
+    transition: all .3s ease;
+    width: 100%;
+}
+.form-group input:focus {
+    box-shadow: 0 0 0 1px var(--blue), 0 0 0 4px var(--light-blue);
+}
+.btn-send {
+    padding: 0 16px;
+    background: var(--blue);
+    border-radius: 5px;
+    color: var(--light);
+    cursor: pointer;
+    border: none;
+    transition: all .3s ease;
+}

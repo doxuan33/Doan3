@@ -1,0 +1,122 @@
+.ppt-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    padding-top: 3rem;
+  }
+  
+  .ppt-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    text-align: left;
+  }
+  
+  .ppt-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  /* Image Section */
+  .ppt-image-container {
+    flex: 1;
+    position: relative;
+    max-width: 700px;
+  }
+  
+  .ppt-image {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .ppt-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: green;
+    color: white;
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 5px;
+    font-weight: bold;
+  }
+  
+  /* Galleria Thumbnails */
+  .ppt-thumbnails {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  
+  .ppt-thumbnail {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid transparent;
+  }
+  
+  .ppt-thumbnail.active,
+  .ppt-thumbnail:hover {
+    border-color: orange;
+  }
+  
+  /* Info Section */
+  .ppt-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 30px;
+  }
+  
+  .ppt-description {
+    color: gray;
+  }
+  
+  .ppt-btn {
+    padding: 10px 16px;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    background: lightgray;
+  }
+  
+  .ppt-btn-orange {
+    background: orange;
+    color: white;
+  }
+  
+  .ppt-btn-green {
+    background: green;
+    color: white;
+  }
+  
+  .ppt-btn-gray {
+    background: gray;
+    color: white;
+  }
+  
+  .ppt-btn-group {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .ppt-license {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
+  .text-green {
+    color: green;
+  }
+.section{
+    margin-top: 170px;
+}
