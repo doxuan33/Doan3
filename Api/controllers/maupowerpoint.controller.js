@@ -1,6 +1,7 @@
 const MauPowerpoint = require("../models/maupowerpoint.model");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 // Cấu hình Multer để lưu file
 const storage = multer.diskStorage({
@@ -12,6 +13,12 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 module.exports = {
+  getTopDownloads: (req, res) => {
+    MauPowerpoint.getTopDownloads((err, results) => {
+        if (err) return res.status(500).json({ error: "Lỗi truy vấn cơ sở dữ liệu!" });
+        res.status(200).json(results.length ? results : { message: "Không có dữ liệu" });
+    });
+  },
   getAll: (req, res) => {
     MauPowerpoint.getAll((err, result) => {
       if (err) return res.status(500).json({ error: err.message });
@@ -114,9 +121,30 @@ module.exports = {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: "ID không hợp lệ!" });
 
-    MauPowerpoint.delete(id, (err, result) => {
+    MauPowerpoint.getById(id, (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.status(200).json({ message: "Xóa thành công!" });
+      if (!result) return res.status(404).json({ message: "Không tìm thấy mẫu PowerPoint!" });
+      
+      // Xóa file nếu tồn tại
+      const deleteFile = (filePath) => {
+        if (filePath) {
+          const fullPath = path.join(__dirname, "..", filePath);
+          fs.unlink(fullPath, (err) => {
+            if (err && err.code !== "ENOENT") {
+              console.error("Lỗi khi xóa file:", err);
+            }
+          });
+        }
+      };
+
+      deleteFile(result.duong_dan_tap_tin);
+      deleteFile(result.duong_dan_anh_nho);
+
+      // Xóa khỏi DB
+      MauPowerpoint.delete(id, (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(200).json({ message: "Xóa thành công!" });
+      });
     });
   },
 };

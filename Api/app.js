@@ -16,6 +16,7 @@ const danhgiaRouter = require('./routes/danhgia.route');
 const danhmucRouter = require('./routes/danhmuc.route');
 const lichsutaixuongRouter = require('./routes/lichsutaixuong.route');
 const maupowerpointRouter = require('./routes/maupowerpoint.route');
+const hinhanhRouter = require('./routes/hinhanh.route');
 const nguoidungRouter = require('./routes/nguoidung.route');
 
 const app = express();
@@ -127,6 +128,7 @@ app.get('/auth/me', verifyToken, (req, res) => {
 app.use('/danhmucs', danhmucRouter);
 app.use('/lichsutaixuongs', lichsutaixuongRouter);
 app.use('/maupowerpoints', maupowerpointRouter);
+app.use('/hinhanhs', hinhanhRouter);
 app.use('/nguoidungs', nguoidungRouter);
 app.use('/danhgias', danhgiaRouter);
 // ✅ Các API yêu cầu xác thực (Bảo vệ bằng `verifyToken`)

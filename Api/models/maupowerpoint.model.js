@@ -1,7 +1,21 @@
 const db = require("../common/db");
 
 const MauPowerpoint = {};
+MauPowerpoint.getTopDownloads = (callback) => {
+  const query = `
+      SELECT mp.id, mp.tieu_de, COUNT(ls.mau_powerpoint_id) AS luot_tai
+      FROM mau_powerpoint mp
+      LEFT JOIN lich_su_tai_xuong ls ON mp.id = ls.mau_powerpoint_id
+      GROUP BY mp.id, mp.tieu_de
+      ORDER BY luot_tai DESC
+      LIMIT 3;
+  `;
 
+  db.query(query, (err, results) => {
+      if (err) return callback(err);
+      callback(null, results);
+  });
+};
 MauPowerpoint.getById = (id, callback) => {
   const sqlString = "SELECT * FROM mau_powerpoint WHERE id = ?";
   db.query(sqlString, [id], (err, result) => {
