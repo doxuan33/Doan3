@@ -3,11 +3,12 @@ import { Paginator } from "primereact/paginator";
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
-import "./App.css"; // Import file CSS riêng để hỗ trợ animation
+import "./App.css";
 
 function PptPage() {
   const [powerpoints, setPowerpoints] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
@@ -16,8 +17,27 @@ function PptPage() {
   const itemsPerPage = 20;
 
   useEffect(() => {
-    // Lấy dữ liệu PowerPoint
-    fetch("http://localhost:1000/maupowerpoints")
+    // Lấy danh sách danh mục và xáo trộn ngẫu nhiên
+    fetch("http://localhost:1000/danhmucs")
+      .then((response) => response.json())
+      .then((data) => {
+        setCategories(shuffleArray(data).slice(0, 5)); // Chọn ngẫu nhiên 5 danh mục
+        setLoadingCategories(false);
+      })
+      .catch((error) => {
+        console.error("Lỗi khi lấy danh mục:", error);
+        setLoadingCategories(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    let url = "http://localhost:1000/maupowerpoints";
+    if (selectedCategory) {
+      url += `?danh_muc_id=${selectedCategory.id}`;
+    }
+    
+    fetch(url)
       .then((response) => response.json())
       .then((data) => {
         setPowerpoints(data);
@@ -27,38 +47,39 @@ function PptPage() {
         console.error("Lỗi khi lấy dữ liệu PowerPoint:", error);
         setLoading(false);
       });
+  }, [selectedCategory]);
 
-    // Lấy danh sách danh mục
-    fetch("http://localhost:1000/danhmucs")
-      .then((response) => response.json())
-      .then((data) => {
-        setCategories(data.slice(0, 5)); // Chỉ lấy 5 danh mục đầu tiên
-        setLoadingCategories(false);
-      })
-      .catch((error) => {
-        console.error("Lỗi khi lấy danh mục:", error);
-        setLoadingCategories(false);
-      });
-  }, []);
+  // Hàm xáo trộn mảng ngẫu nhiên
+  const shuffleArray = (array) => {
+    return array.sort(() => Math.random() - 0.5);
+  };
 
   // Xử lý khi đổi trang
   const onPageChange = (event) => {
     setFirst(event.first);
   };
 
+  // Xử lý chọn danh mục
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
+    setFirst(0); // Reset về trang đầu tiên
+  };
+
   // Xử lý download
   const handleDownload = (filePath) => {
-    const link = document.createElement('a');
-    link.href = `http://localhost:1000${filePath}`; // Link tới file PowerPoint
-    link.download = true; // Tự động tải về mà không cần mở lên
-    link.click(); // Bắt đầu tải xuống
+    const link = document.createElement("a");
+    link.href = `http://localhost:1000${filePath}`;
+    link.download = true;
+    link.click();
   };
 
   return (
     <>
       {/* Categories */}
       <section className="top-categories">
-        <p className="left_content">Trang chủ <i className="bx bx-chevron-right"></i> PowerPoint</p>
+        <p className="left_content">
+          Trang chủ <i className="bx bx-chevron-right"></i> PowerPoint
+        </p>
         <h1 className="heading-1">Mẫu PowerPoint Miễn Phí và Google Trang Trình Bày</h1>
 
         {/* Danh mục */}
@@ -67,8 +88,17 @@ function PptPage() {
             <p>Đang tải danh mục...</p>
           ) : (
             <div className="buttons left_content">
-              {categories.map((category, index) => (
-                <button key={index}>{category.ten}</button>
+              <button onClick={() => handleCategoryClick(null)} className={!selectedCategory ? "active" : ""}>
+                Tất cả
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryClick(category)}
+                  className={selectedCategory?.id === category.id ? "active" : ""}
+                >
+                  {category.ten}
+                </button>
               ))}
             </div>
           )}
@@ -83,14 +113,18 @@ function PptPage() {
           ) : (
             powerpoints.slice(first, first + itemsPerPage).map((ppt, index) => (
               <div className="card-category" key={index}>
-                {/* Ảnh template */}
-                <img src={`http://localhost:1000${ppt.duong_dan_anh_nho}`} alt={ppt.tieu_de} className="template-img" />
+                <img
+                  src={ppt.duong_dan_anh_nho}
+                  alt={ppt.tieu_de}
+                  className="template-img"
+                />
 
-                {/* Nút PowerPoint - hiển thị khi hover */}
                 <div className="overlay">
-                  {/* Nhãn miễn phí nếu có */}
                   {ppt.mien_phi && <span className="badge-free">Miễn phí</span>}
-                  <button className="download-btn" onClick={() => handleDownload(ppt.duong_dan_tap_tin)}>
+                  <button
+                    className="download-btn"
+                    onClick={() => handleDownload(ppt.duong_dan_tap_tin)}
+                  >
                     <i className="bx bx-download"></i> PowerPoint
                   </button>
                   <p className="template-title">{ppt.tieu_de}</p>

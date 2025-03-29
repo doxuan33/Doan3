@@ -32,40 +32,95 @@
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
-  
-  .ppt-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: green;
-    color: white;
-    padding: 6px 12px;
-    font-size: 14px;
-    border-radius: 5px;
-    font-weight: bold;
-  }
-  
+  /* Bộ đếm slide */
+.ppt-counter {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+/* Nút điều hướng */
+.ppt-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.4); /* Mờ nhẹ */
+  color: rgba(247, 245, 245, 0.747);
+  border: none;
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0; /* Ẩn mặc định */
+  transition: opacity 0.3s ease, background 0.3s ease;
+}
+.ppt-image-container:hover .ppt-nav {
+  opacity: 1;
+}
+.ppt-prev {
+  left: 10px;
+}
+
+.ppt-next {
+  right: 10px;
+}
+
+.ppt-nav:hover {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+}
+
+/* Chữ "Bảo vệ bản quyền" */
+.ppt-copyright {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
   /* Galleria Thumbnails */
   .ppt-thumbnails {
     display: flex;
     gap: 8px;
     margin-top: 10px;
-  }
-  
-  .ppt-thumbnail {
+    overflow-x: auto; /* Cho phép cuộn nếu cần */
+    max-width: 100%; /* Giữ nó không bị tràn */
+    padding-bottom: 5px;
+}
+
+.ppt-thumbnails::-webkit-scrollbar {
+    display: none; /* Ẩn thanh cuộn trên Chrome/Safari */
+}
+
+.ppt-thumbnail {
     width: 80px;
     height: 60px;
     object-fit: cover;
     border-radius: 5px;
     cursor: pointer;
     border: 2px solid transparent;
-  }
-  
-  .ppt-thumbnail.active,
-  .ppt-thumbnail:hover {
+    flex-shrink: 0; /* Ngăn hình ảnh bị co lại */
+}
+
+.ppt-thumbnail.active,
+.ppt-thumbnail:hover {
     border-color: orange;
-  }
-  
+}
   /* Info Section */
   .ppt-info {
     flex: 1;
@@ -119,4 +174,38 @@
   }
 .section{
     margin-top: 170px;
+}
+.ppt-subtitle {
+  font-size: 18px;
+  color: #666;
+  margin-top: -10px;
+}
+
+.ppt-detail {
+  margin-top: 10px;
+  font-size: 16px;
+  color: #444;
+}
+
+.text-highlight {
+  font-weight: bold;
+  color: #007bff;
+}
+
+.ppt-tags {
+  margin-top: 10px;
+}
+
+.tag {
+  display: inline-block;
+  background: #f0f0f0;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-right: 5px;
+  font-size: 14px;
+}
+
+.tag-more {
+  background: #d4f4d2;
+  color: #2d8f2d;
 }

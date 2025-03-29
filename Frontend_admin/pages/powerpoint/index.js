@@ -40,6 +40,19 @@ export default function PowerPoint() {
             setFilteredPowerpoints(powerpoints);
         }
     }, [selectedCategory, powerpoints]);
+    useEffect(() => {
+        if (globalFilterValue) {
+            const lowerCaseFilter = globalFilterValue.toLowerCase();
+            setFilteredPowerpoints(
+                powerpoints.filter((ppt) =>
+                    ppt.tieu_de.toLowerCase().includes(lowerCaseFilter) ||
+                    ppt.mo_ta.toLowerCase().includes(lowerCaseFilter)
+                )
+            );
+        } else {
+            setFilteredPowerpoints(powerpoints);
+        }
+    }, [globalFilterValue, powerpoints]);    
     const fetchPowerPoints = () => {
         axios.get('http://localhost:1000/maupowerpoints')
             .then(response => setPowerpoints(response.data))
@@ -161,7 +174,7 @@ export default function PowerPoint() {
             return (
                 <div className='col-12'>
                     <div className="flex flex-column md:flex-row align-items-center p-3 border-1 surface-border">
-                        <img src={`http://localhost:1000${powerpoint.duong_dan_anh_nho}`} alt={powerpoint.tieu_de} className="w-10rem shadow-2 mr-5" />
+                        <img src={powerpoint.duong_dan_anh_nho} alt={powerpoint.tieu_de} className="w-10rem shadow-2 mr-5" />
                         <div className="flex-1">
                             <h5 className="mt-3 font-bold">{powerpoint.tieu_de}</h5>
                             <p>{powerpoint.mo_ta}</p>
@@ -170,7 +183,7 @@ export default function PowerPoint() {
                         <div className="flex gap-2">
                             <Button icon="pi pi-pencil" className="p-button-warning p-button-sm" onClick={() => openDialog(powerpoint)} />
                             <Button icon="pi pi-trash" className="p-button-danger p-button-sm" onClick={() => handleDelete(powerpoint.id)} />
-                            <Button icon="pi pi-download" className="p-button-outlined p-button-sm" />
+                            <Button icon="pi pi-download" className="p-button-outlined p-button-sm" onClick={() => handleDownload(powerpoint.duong_dan_tap_tin)} />
                         </div>
                     </div>
                 </div>
@@ -179,7 +192,7 @@ export default function PowerPoint() {
             return (
                 <div className="col-12 md:col-4">
                     <div className="card border-1 surface-border p-3 text-center">
-                        <img src={`http://localhost:1000${powerpoint.duong_dan_anh_nho}`} alt={powerpoint.tieu_de} className="w-full shadow-2"/>
+                        <img src={powerpoint.duong_dan_anh_nho} alt={powerpoint.tieu_de} className="w-full shadow-2"/>
                         <h5 className="mt-3 font-bold">{powerpoint.tieu_de}</h5>
                         <p>{powerpoint.mo_ta}</p>
                         <Rating value={powerpoint.rating || 5} readOnly cancel={false} />
@@ -193,7 +206,25 @@ export default function PowerPoint() {
             );
         }
     };
+    const [imagePreview, setImagePreview] = useState(formData.duong_dan_anh_nho || "");
+    const [pptFileName, setPptFileName] = useState(formData.duong_dan_tap_tin || "");
 
+    const onImageSelect = (e) => {
+        const file = e.files[0];
+        if (file) {
+            const objectUrl = URL.createObjectURL(file);
+            setImagePreview(objectUrl);
+            handleFileChange({ target: { files: [file] } }, "image");
+        }
+    };
+
+    const onFileSelect = (e) => {
+        const file = e.files[0];
+        if (file) {
+            setPptFileName(file.name);
+            handleFileChange({ target: { files: [file] } }, "file");
+        }
+    };
     return (
         <div className="card">
             <Toast ref={toast} />
@@ -201,9 +232,20 @@ export default function PowerPoint() {
             <h4>Danh mục - Mẫu PowerPoint</h4>
             <DataView value={filteredPowerpoints} layout={layout} paginator rows={6} itemTemplate={itemTemplate} header={
                 <div className="flex flex-column md:flex-row md:justify-content-between gap-2">
-                    <Dropdown value={selectedCategory} options={categories.map(cat => ({ label: cat.ten, value: cat.id }))} 
+                    <Dropdown value={selectedCategory} 
+                    options={[
+                        { label: "Tất cả bộ sưu tập", value: null }, // Thêm tùy chọn này vào đầu danh sách
+                        ...categories.map((cat) => ({ label: cat.ten, value: cat.id }))
+                    ]}
                         optionLabel="label" placeholder="Chọn danh mục" onChange={handleCategoryChange} />
-                    <InputText value={globalFilterValue} onChange={(e) => setGlobalFilterValue(e.target.value)} placeholder="Nhập tìm kiếm.." />
+                    <span className="p-input-icon-left">
+                    <i className="pi pi-search" />
+                    <InputText
+                        value={globalFilterValue}
+                        onChange={(e) => setGlobalFilterValue(e.target.value)}
+                        placeholder="Nhập tìm kiếm..."
+                    />
+                </span>
                     <Button label="Thêm" icon="pi pi-plus" className="p-button-success" onClick={() => openDialog()} />
                     <DataViewLayoutOptions layout={layout} onChange={(e) => setLayout(e.value)} />
                 </div>
@@ -222,32 +264,22 @@ export default function PowerPoint() {
                     </div>
 
                     <div className="col-6">
-                    <Card className="p-4 shadow-2 border-round-lg">
-                        <div className="flex flex-column gap-4">
-                            {/* Upload ảnh */}
-                            <div>
-                                <label htmlFor="duong_dan_anh_nho" className="font-bold block mb-2">Chọn ảnh</label>
-                                <input id="duong_dan_anh_nho" type="file" accept="image/*" onChange={(e) => handleFileChange(e, "image")} />
-                                {formData.duong_dan_anh_nho && (
-                                    <img src={`http://localhost:1000${formData.duong_dan_anh_nho}`} alt="Ảnh xem trước" width="120" className="mt-2 border-round-lg shadow-1" />
+                    {/* Upload ảnh */}
+                    
+                            {formData.duong_dan_anh_nho && (
+                                    <img src={formData.duong_dan_anh_nho} alt="Ảnh xem trước" width="150" className="mt-2 border-round-lg shadow-1" />
                                 )}
+                            <div className="mb-4">
+                                <label className="font-bold block mb-2">Chọn ảnh</label>
+                                <FileUpload mode="basic" accept="image/*" customUpload auto chooseLabel="Chọn ảnh" onSelect={onImageSelect} />
                             </div>
 
                             {/* Upload tập tin PowerPoint */}
                             <div>
-                                <label htmlFor="duong_dan_tap_tin" className="font-bold block mb-2">Chọn tập tin PowerPoint</label>
-                                <input id="duong_dan_tap_tin" type="file" accept=".ppt,.pptx" onChange={(e) => handleFileChange(e, "file")} />
-                                {formData.duong_dan_tap_tin && <p className="mt-2">{formData.duong_dan_tap_tin}</p>}
-                                    </div>
-                        </div>
-                    </Card>
-                        {/* <label htmlFor="duong_dan_anh_nho">Chọn ảnh</label>
-                        <input id="duong_dan_anh_nho" type="file" accept="image/*" onChange={(e) => handleFileChange(e, "image")} />
-                        {formData.duong_dan_anh_nho && <img src={formData.duong_dan_anh_nho} alt="Ảnh xem trước" className="w-5rem mt-2" />}
-
-                        <label htmlFor="duong_dan_tap_tin">Chọn tập tin PowerPoint</label>
-                        <input id="duong_dan_tap_tin" type="file" accept=".ppt,.pptx" onChange={(e) => handleFileChange(e, "file")} />
-                        {formData.duong_dan_tap_tin && <p className="mt-2">{formData.duong_dan_tap_tin}</p>} */}
+                                <label className="font-bold block mb-2">Chọn tập tin PowerPoint</label>
+                                <FileUpload mode="basic" accept=".ppt,.pptx" customUpload auto chooseLabel="Chọn file" onSelect={onFileSelect} />
+                                {formData.duong_dan_tap_tin && <p className="mt-2 text-green-600 font-medium">{formData.duong_dan_tap_tin}</p>}
+                            </div>
                     </div>
 
                     <div className="col-12 text-center mt-3">
