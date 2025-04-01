@@ -3,6 +3,7 @@ import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "./ppt.css";
+import "./App.css";
 const images = [
   { src: "/img/new-1.png", alt: "Hình 1" },
   { src: "/img/new-2.png", alt: "Hình 2" },
@@ -101,9 +102,9 @@ const PPTTemplate = () => {
           <button className="ppt-btn ppt-btn-orange">📂 PowerPoint</button>
 
           <div className="ppt-btn-group">
-            <button className="ppt-btn">Thông tin</button>
-            <button className="ppt-btn">Giống</button>
-            <button className="ppt-btn">Chia sẻ</button>
+            <button className="ppt-btn"><i class='bx bxs-info-circle' ></i> Thông tin</button>
+            <button className="ppt-btn"><i class='bx bxs-heart'></i> Yêu thích</button>
+            <button className="ppt-btn"><i class='bx bxs-share-alt' ></i> Chia sẻ</button>
           </div>
 
           {/* License */}
@@ -116,7 +117,84 @@ const PPTTemplate = () => {
           </div>
         </div>
       </div>
+      <section className=" top-categories top">
+        <h1 className="heading-1">Mẫu PowerPoint thịnh hành</h1>
+        <div className="container-categories">
+          {[
+            { img: "/img/top-1.png", title: "Powerpoint chủ đề cầu vồng", free: true },
+            { img: "/img/top-2.png", title: "Find A Rainbow Day", free: true },
+            { img: "/img/top-3.png", title: "Arabic Style Marketing Plan", free: false },
+            { img: "/img/top-4.png", title: "Happy Father's Day", free: true },
+            { img: "/img/top-5.png", title: "Happy Father's Day", free: false },
+          ].map((category, index) => (
+            <div className="card-category" key={index}>
+              {/* Ảnh template */}
+              <img src={category.img} alt={category.title} className="template-img" />
+
+              {/* Nút PowerPoint - hiển thị khi hover */}
+              <div className="overlay">
+                {/* Nhãn miễn phí */}
+                {category.free && <span className="badge-free">Miễn phí</span>}
+                <button className="download-btn">
+                  <i className="bx bx-download"></i> PowerPoint
+                </button>
+                <p className="template-title">{category.title}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className=" top-categories top">
+        <h1 className="heading-1">Hình nền sáng tạo</h1>
+        <div className="container-categories">
+          {[
+            { img: "https://img4.thuthuatphanmem.vn/uploads/2020/06/22/anh-nen-anime-2k_092516251.jpg", title: "Bầu trời", free: true },
+            { img: "https://mega.com.vn/media/news/2707_nen-background-pp-chu-de-hoc-tap7.jpg", title: "Học tập", free: false },
+            { img: "https://png.pngtree.com/thumb_back/fh260/background/20240909/pngtree-chinese-new-year-red-background-with-hanging-lanterns-image_16133909.jpg", title: "Ngày lễ", free: true },
+            { img: "https://png.pngtree.com/thumb_back/fh260/background/20241231/pngtree-ancestor-worship-tomb-sweeping-day-image_16531970.jpg", title: "Khám phá", free: false },
+          ].map((category, index) => (
+            <div className="card-category-1" key={index}>
+              {/* Ảnh template */}
+              <img src={category.img} alt={category.title} width={350} height={200}/>
+
+              {/* Nút PowerPoint - hiển thị khi hover */}
+              <div className="overlay">
+                {/* Nhãn miễn phí */}
+                {category.free && <span className="badge-free">Miễn phí</span>}
+                <button className="download-btn">
+                  Xem thêm về bộ sưu tập
+                </button>
+                <p className="template-title">{category.title}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="container-categories top">
+          {[
+            { img: "https://antimatter.vn/wp-content/uploads/2022/08/hinh-nen-bien.jpg", title: "Biển cả", free: true },
+            { img: "https://png.pngtree.com/background/20230427/original/pngtree-landscape-winter-snow-covered-japanese-village-with-a-bridge-covered-in-picture-image_2497611.jpg", title: "Mùa đông", free: false },
+            { img: "https://image.tienphong.vn/600x315/Uploaded/2023/rwbvhvobvvimsb/2021_09_06/6-nhom-trai-cay-de-an-buoi-sang-5711.jpg", title: "Hoa quả", free: true },
+            { img: "https://khoinguonsangtao.vn/wp-content/uploads/2022/09/hinh-nen-cay-xanh-4k-cho-may-tinh.jpg", title: "Khu rừng", free: false },
+          ].map((category, index) => (
+            <div className="card-category-1" key={index}>
+              {/* Ảnh template */}
+              <img src={category.img} alt={category.title} width={350} height={200}/>
+
+              {/* Nút PowerPoint - hiển thị khi hover */}
+              <div className="overlay">
+                {/* Nhãn miễn phí */}
+                {category.free && <span className="badge-free">Miễn phí</span>}
+                <button className="download-btn">
+                  Xem thêm về bộ sưu tập
+                </button>
+                <p className="template-title">{category.title}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
+    
   );
 };
 

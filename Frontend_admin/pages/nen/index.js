@@ -44,7 +44,7 @@ export default function HinhnenImg() {
             if (globalFilterValue) {
                 setFilteredPowerpoints(
                     hinhnenImgs.filter((img) =>
-                        img.tieu_de.toLowerCase().includes(globalFilterValue.toLowerCase()),
+                        img.tieu_de.toLowerCase().includes(globalFilterValue.toLowerCase()) ||
                         img.mo_ta.toLowerCase().includes(globalFilterValue.toLowerCase())
                     )
                 );
@@ -202,9 +202,7 @@ export default function HinhnenImg() {
                         <h5 className="font-bold">{hinhnenImg.tieu_de}</h5>
                         <p>{hinhnenImg.mo_ta}</p>
                     </div>
-                    <div className="flex justify-content-center mt-2">
-                        <Rating value={hinhnenImg.rating} readOnly cancel={false} />
-                    </div>
+                    <Rating value={hinhnenImg.rating} readOnly cancel={false} />
                 </div>
                 <div className="flex gap-2">
                   <Button label="Sửa" icon="pi pi-pencil" className="p-button-warning p-button-sm" onClick={() => openDialog(hinhnenImg)} />

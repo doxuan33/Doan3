@@ -4,7 +4,7 @@ import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "./App.css";
-
+import "./ppt.css";
 function PptPage() {
   const [powerpoints, setPowerpoints] = useState([]);
   const [categories, setCategories] = useState([]);

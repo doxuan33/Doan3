@@ -1,3 +1,4 @@
+
 .ppt-container {
     max-width: 1200px;
     margin: auto;
@@ -24,7 +25,7 @@
   .ppt-image-container {
     flex: 1;
     position: relative;
-    max-width: 700px;
+    max-width: 600px;
   }
   
   .ppt-image {
@@ -48,7 +49,7 @@
 /* Nút điều hướng */
 .ppt-nav {
   position: absolute;
-  top: 50%;
+  top: 30%;
   transform: translateY(-50%);
   background: rgba(0, 0, 0, 0.4); /* Mờ nhẹ */
   color: rgba(247, 245, 245, 0.747);
@@ -137,11 +138,11 @@
   .ppt-btn {
     padding: 10px 16px;
     border-radius: 5px;
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 14px;
     cursor: pointer;
     border: none;
-    background: lightgray;
+    background: rgba(230, 229, 229, 0.853);
+    color: #666;
   }
   
   .ppt-btn-orange {

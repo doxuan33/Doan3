@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Toast } from "primereact/toast";
+import { format } from "date-fns"; // Định dạng ngày tháng
 
 const Download = () => {
     const [downloads, setDownloads] = useState([]);
@@ -12,8 +13,8 @@ const Download = () => {
     const [loading, setLoading] = useState(true);
     const [dialogVisible, setDialogVisible] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({ id: "", nguoi_dung_id: "", mau_powerpoint_id: "" });
-    const toast = React.useRef(null);
+    const [formData, setFormData] = useState({ nguoi_dung_id: "", mau_powerpoint_id: "" });
+    const toast = useRef(null);
 
     useEffect(() => {
         fetchData();
@@ -35,14 +36,14 @@ const Download = () => {
 
     // Mở Dialog để thêm mới
     const handleAdd = () => {
-        setFormData({ id: "", nguoi_dung_id: "", mau_powerpoint_id: "" });
+        setFormData({ nguoi_dung_id: "", mau_powerpoint_id: "" });
         setIsEditing(false);
         setDialogVisible(true);
     };
 
     // Mở Dialog để chỉnh sửa
     const handleEdit = (rowData) => {
-        setFormData(rowData);
+        setFormData({ id: rowData.id, nguoi_dung_id: rowData.nguoi_dung_id, mau_powerpoint_id: rowData.mau_powerpoint_id });
         setIsEditing(true);
         setDialogVisible(true);
     };
@@ -54,6 +55,7 @@ const Download = () => {
             const url = isEditing
                 ? `http://localhost:1000/lichsutaixuongs/${formData.id}`
                 : "http://localhost:1000/lichsutaixuongs";
+
             const response = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
@@ -120,6 +122,11 @@ const Download = () => {
         );
     };
 
+    // Hiển thị ngày tháng đúng định dạng
+    const formatDate = (dateString) => {
+        return format(new Date(dateString), "dd/MM/yyyy HH:mm:ss");
+    };
+
     return (
         <div className="grid">
             <Toast ref={toast} />
@@ -138,7 +145,7 @@ const Download = () => {
                         <Column field="id" header="ID" sortable style={{ minWidth: "5rem" }} />
                         <Column field="nguoi_dung_id" header="ID Người Dùng" sortable style={{ minWidth: "10rem" }} />
                         <Column field="mau_powerpoint_id" header="ID PowerPoint" sortable style={{ minWidth: "10rem" }} />
-                        <Column field="thoi_gian_tai" header="Thời Gian" sortable style={{ minWidth: "14rem" }} />
+                        <Column field="thoi_gian_tai" header="Thời Gian" body={(rowData) => formatDate(rowData.thoi_gian_tai)} sortable style={{ minWidth: "14rem" }} />
                         <Column body={actionBodyTemplate} header="Hành động" style={{ minWidth: "10rem" }} />
                     </DataTable>
                 </div>

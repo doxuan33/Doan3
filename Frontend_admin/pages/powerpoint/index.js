@@ -195,7 +195,9 @@ export default function PowerPoint() {
                         <img src={powerpoint.duong_dan_anh_nho} alt={powerpoint.tieu_de} className="w-full shadow-2"/>
                         <h5 className="mt-3 font-bold">{powerpoint.tieu_de}</h5>
                         <p>{powerpoint.mo_ta}</p>
-                        <Rating value={powerpoint.rating || 5} readOnly cancel={false} />
+                        <div className="flex justify-content-center mt-2">
+                            <Rating value={powerpoint.rating || 5} readOnly cancel={false} />
+                        </div>
                         <div className="flex justify-content-center gap-2 mt-2">
                             <Button icon="pi pi-pencil" className="p-button-warning p-button-sm" onClick={() => openDialog(powerpoint)} />
                             <Button icon="pi pi-trash" className="p-button-danger p-button-sm" onClick={() => handleDelete(powerpoint.id)} />

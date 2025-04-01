@@ -49,7 +49,6 @@
 }
 
 body {
-  background: #ffffff;
   font-family: 'Poppins', sans-serif;
 }
 
@@ -102,6 +101,7 @@ a:hover {
 	display: none;
 }
 .hero {
+	height: 70px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -115,11 +115,12 @@ a:hover {
 }
 
 .customer-support i {
-  font-size: 2rem;
+  font-size: 1.5rem;
 }
 .content-customer-support {
 	display: flex;
 	flex-direction: column;
+	font-size: 14px;
 }
 
 .container-logo {
@@ -134,7 +135,7 @@ a:hover {
 .container-logo h1 a {
   text-decoration: none;
   color: #000;
-  font-size: 2rem;
+  font-size: 1.75rem;
   text-transform: uppercase;
   letter-spacing: -1px;
   font-weight: bold;
@@ -211,7 +212,22 @@ a:hover {
 	height: 3.5rem;
 	overflow: hidden;
 }
-
+.search-box {
+	display: flex;
+	align-items: center;
+	background: white;
+	border: 2px solid #cce3d0;
+	border-radius: 25px;
+	padding: 1rem;
+	width: 500px; /* Điều chỉnh kích thước phù hợp */
+  }
+  
+  .dropdown-search {
+	border: none;
+	background: transparent;
+	outline: none;
+	font-size: 16px;
+  }
 .search-form input {
   outline: none;
 	font-family: inherit;
@@ -225,6 +241,14 @@ a:hover {
 .search-form input::-webkit-search-cancel-button {
 	appearance: none;
 }
+.search-input {
+	flex: 1;
+	border: none;
+	outline: none;
+	font-size: 16px;
+	padding: 10px;
+	background: transparent;
+}
 .btn-search {
 	border: none;
 	background-color: var(--promary-color);
@@ -232,7 +256,7 @@ a:hover {
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-	padding: 1rem;
+	padding: 2.5rem;
 }
 /* BANNER */
 .banner {
@@ -297,19 +321,20 @@ a:hover {
 .carousel .list .item .topic{
   color: #f1683a;
 }
-.carousel .list .item .buttons {
-  display: grid;
+.buttons {
+  display: flex;
   grid-template-columns: repeat(2, 130px);
   grid-template-rows: 40px;
   gap: 5px;
   margin-top: 20px;
 }
-.carousel .list .item .buttons button {
+.buttons button {
   border: none;
   background-color: var(--promary-color);
   letter-spacing: 3px;
   font-weight: 500;
   color: #fff;
+  border-radius: 5px;
 }
 .carousel .list .item .buttons button:nth-child(2){
   background-color: transparent;
