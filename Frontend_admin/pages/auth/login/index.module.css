@@ -227,3 +227,8 @@
     width: 100%;
     outline: none;
 }
+.error {
+    color: red;
+    font-size: 14px;
+    margin: 10px 0;
+}

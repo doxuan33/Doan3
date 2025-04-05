@@ -1,88 +1,320 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "./ppt.css";
 import "./App.css";
-const images = [
-  { src: "/img/new-1.png", alt: "Hình 1" },
-  { src: "/img/new-2.png", alt: "Hình 2" },
-  { src: "/img/new-3.png", alt: "Hình 3" },
-  { src: "/img/new-4.png", alt: "Hình 4" },
-  { src: "/img/new-4.png", alt: "Hình 4" },
-  { src: "/img/new-4.png", alt: "Hình 4" },
-  { src: "/img/new-4.png", alt: "Hình 4" },
-  { src: "/img/new-4.png", alt: "Hình 4" },
-  { src: "/img/new-4.png", alt: "Hình 4" },
-  { src: "/img/new-4.png", alt: "Hình 4" },
-  { src: "/img/new-4.png", alt: "Hình 4" },
-  { src: "/img/new-4.png", alt: "Hình 4" },
-  
-  { src: "/img/new-4.png", alt: "Hình 4" },
-];
+import { useLocation } from "react-router-dom";
 
 const PPTTemplate = () => {
+  const location = useLocation();
+  const { powerpoint, image } = location.state || {};
+  const item = powerpoint || image; // Use either powerpoint or image
+  const isPowerpoint = !!powerpoint; // Check if the item is a PowerPoint
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [detailImages, setDetailImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [relatedPowerpoints, setRelatedPowerpoints] = useState([]);
+  const [relatedBackgrounds, setRelatedBackgrounds] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const thumbnailRef = useRef(null);
+
+  // Hàm cuộn thumbnail sang trái
+  const scrollThumbnailsLeft = () => {
+    if (thumbnailRef.current) {
+      thumbnailRef.current.scrollBy({ left: -100, behavior: "smooth" });
+    }
+  };
+
+  // Hàm cuộn thumbnail sang phải
+  const scrollThumbnailsRight = () => {
+    if (thumbnailRef.current) {
+      thumbnailRef.current.scrollBy({ left: 100, behavior: "smooth" });
+    }
+  };
+
+  // Lấy dữ liệu từ API
+  useEffect(() => {
+    if (item) {
+      if (isPowerpoint) {
+        // Lấy ảnh chi tiết của PowerPoint
+        fetch(`http://localhost:1000/maupowerpointanhchitiets/mau-powerpoint/${item.id}`)
+          .then((response) => response.json())
+          .then((data) => {
+            const images = Array.isArray(data)
+              ? data.map((img) => ({
+                  src: `http://localhost:1000${img.duong_dan_anh}`,
+                  alt: `Ảnh chi tiết ${img.thu_tu + 1}`,
+                }))
+              : [];
+            setDetailImages(images);
+            setLoading(false);
+          })
+          .catch((error) => {
+            console.error("Lỗi khi lấy ảnh chi tiết:", error);
+            setDetailImages([]);
+            setLoading(false);
+          });
+      } else {
+        // For images, use the single image as the detail image
+        setDetailImages([
+          {
+            src: item.duong_dan_anh_nho,
+            alt: item.tieu_de,
+          },
+        ]);
+        setLoading(false);
+      }
+
+      // Lấy 5 danh sách mẫu PowerPoint ngẫu nhiên
+      fetch(`http://localhost:1000/maupowerpoints?limit=5&random=true`)
+        .then((response) => response.json())
+        .then((data) => {
+          const powerpoints = Array.isArray(data)
+            ? data.map((item) => ({
+                id: item.id,
+                tieu_de: item.tieu_de,
+                duong_dan_anh_nho: item.duong_dan_anh_nho,
+                mo_ta: item.mo_ta,
+                free: false,
+              }))
+            : [];
+          setRelatedPowerpoints(powerpoints);
+        })
+        .catch((error) => {
+          console.error("Lỗi khi lấy mẫu PowerPoint ngẫu nhiên:", error);
+          setRelatedPowerpoints([]);
+        });
+
+      // Lấy 8 danh sách hình nền sáng tạo ngẫu nhiên
+      fetch(`http://localhost:1000/hinhanhs?limit=8&random=true`)
+        .then((response) => response.json())
+        .then((data) => {
+          const backgrounds = Array.isArray(data)
+            ? data.map((item) => ({
+                id: item.id,
+                tieu_de: item.tieu_de,
+                duong_dan_anh_nho: item.duong_dan_anh_nho,
+                mo_ta: item.mo_ta,
+                free: false,
+              }))
+            : [];
+          setRelatedBackgrounds(backgrounds);
+        })
+        .catch((error) => {
+          console.error("Lỗi khi lấy hình nền sáng tạo ngẫu nhiên:", error);
+          setRelatedBackgrounds([]);
+        });
+
+      // Lấy danh sách đánh giá và thông tin người dùng
+      const endpoint = isPowerpoint
+        ? `http://localhost:1000/danhgias/powerpoint/${item.id}`
+        : `http://localhost:1000/danhgias/image/${item.id}`;
+      fetch(endpoint)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Không thể lấy danh sách đánh giá");
+          }
+          return response.json();
+        })
+        .then(async (data) => {
+          const reviewsData = Array.isArray(data) ? data : [];
+          const reviewsWithUserNames = await Promise.all(
+            reviewsData.map(async (review) => {
+              try {
+                const userResponse = await fetch(
+                  `http://localhost:1000/nguoidungs/${review.nguoi_dung_id}`
+                );
+                if (!userResponse.ok) {
+                  throw new Error(`Không thể lấy thông tin người dùng ${review.nguoi_dung_id}`);
+                }
+                const userData = await userResponse.json();
+                return {
+                  user: userData.ten || "Người dùng ẩn danh",
+                  rating: review.diem_danh_gia || 5,
+                  comment: review.binh_luan || "Không có bình luận.",
+                  date: review.ngay_tao || "2025-04-03",
+                };
+              } catch (error) {
+                console.error(`Lỗi khi lấy thông tin người dùng ${review.nguoi_dung_id}:`, error);
+                return {
+                  user: "Người dùng ẩn danh",
+                  rating: review.diem_danh_gia || 5,
+                  comment: review.binh_luan || "Không có bình luận.",
+                  date: review.ngay_tao || "2025-04-03",
+                };
+              }
+            })
+          );
+          setReviews(reviewsWithUserNames);
+        })
+        .catch((error) => {
+          console.error("Lỗi khi lấy đánh giá:", error);
+          setReviews([
+            { user: "Nguyễn Văn A", rating: 4.5, comment: "Hình ảnh rất đẹp!", date: "2025-04-01" },
+            { user: "Trần Thị B", rating: 5, comment: "Rất phù hợp cho thiết kế của tôi.", date: "2025-03-30" },
+          ]);
+        });
+    }
+  }, [item, isPowerpoint]);
 
   const prevSlide = () => {
-    setSelectedIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setSelectedIndex((prev) => (prev === 0 ? detailImages.length - 1 : prev - 1));
   };
 
   const nextSlide = () => {
-    setSelectedIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setSelectedIndex((prev) => (prev === detailImages.length - 1 ? 0 : prev + 1));
   };
+
+  const handleDownload = async () => {
+    try {
+      // Validate the URL before proceeding
+      const downloadUrl = isPowerpoint
+        ? `http://localhost:1000${item.duong_dan_tap_tin}` // Prepend for PowerPoints
+        : item.duong_dan_anh_nho; // Use as-is for images since it already includes http://localhost:1000
+  
+      if (!downloadUrl) {
+        throw new Error("Không tìm thấy đường dẫn tệp để tải xuống.");
+      }
+  
+      // Get the token from localStorage
+      const token = localStorage.getItem("token");
+      let userId = null;
+  
+      // If token exists, fetch the user ID
+      if (token) {
+        const userResponse = await fetch("http://localhost:1000/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          userId = userData.user.id;
+        } else {
+          console.error("Failed to fetch user data:", userResponse.statusText);
+        }
+      }
+  
+      // Prepare the download history data
+      const downloadHistory = {
+        nguoi_dung_id: userId, // Will be null if user is not logged in
+        mau_powerpoint_id: isPowerpoint ? item.id : null, // PowerPoint ID if applicable
+        hinh_anh_id: !isPowerpoint ? item.id : null, // Image ID if applicable
+        // thoi_gian_tai is automatically set by the database
+      };
+  
+      // Send POST request to save download history
+      const response = await fetch("http://localhost:1000/lichsutaixuongs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }), // Include token if user is logged in
+        },
+        body: JSON.stringify(downloadHistory),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save download history");
+      }
+  
+      // Fetch the file as a blob
+      const fileResponse = await fetch(downloadUrl, {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }), // Include token if required by the server
+        },
+      });
+  
+      if (!fileResponse.ok) {
+        throw new Error("Không thể tải tệp: " + fileResponse.statusText);
+      }
+  
+      const blob = await fileResponse.blob();
+      const url = window.URL.createObjectURL(blob);
+  
+      // Create a temporary link to download the file
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = item.tieu_de || (isPowerpoint ? "powerpoint" : "image"); // Set a meaningful file name
+      document.body.appendChild(link);
+      link.click();
+  
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error during download:", error.message);
+      alert(`Có lỗi xảy ra khi tải xuống: ${error.message}`);
+    }
+  };
+
+  const averageRating = reviews.length > 0
+    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
+    : 0;
+
+  if (!item) {
+    return <div>Không có dữ liệu nào được chọn.</div>;
+  }
+
   return (
     <div className="ppt-container">
-      <p className="ppt-description">Trang chủ <i class='bx bx-chevron-right'></i> PowerPoint</p>
-      {/* Header */}
-      <h1 className="ppt-title">Khí Quyển Giáng Thiết Kế Ppt Mẫu</h1>
+      <p className="ppt-description">
+        Trang chủ <i className="bx bx-chevron-right"></i> {isPowerpoint ? "PowerPoint" : "Hình ảnh"}
+      </p>
+      <h1 className="ppt-title">{item.tieu_de}</h1>
 
-      {/* Main Content */}
       <div className="ppt-content">
-        {/* Image Section */}
         <div className="ppt-image-container">
-          <img
-            src={images[selectedIndex].src}
-            alt={images[selectedIndex].alt}
-            className="ppt-image"
-          />
-          {/* Bộ đếm slide */}
-          <div className="ppt-counter">
-            {selectedIndex + 1}/{images.length}
-          </div>
-
-          {/* Nút điều hướng trái/phải */}
-          <button className="ppt-nav ppt-prev" onClick={prevSlide}>
-            ❮
-          </button>
-          <button className="ppt-nav ppt-next" onClick={nextSlide}>
-            ❯
-          </button>
-
-          {/* Hình thu nhỏ */}
-          <div className="ppt-thumbnails">
-            {images.map((img, index) => (
+          {loading ? (
+            <p>Đang tải ảnh chi tiết...</p>
+          ) : detailImages.length === 0 ? (
+            <img src={item.duong_dan_anh_nho} alt={item.tieu_de} className="ppt-image" />
+          ) : (
+            <>
               <img
-                key={index}
-                src={img.src}
-                alt={img.alt}
-                className={`ppt-thumbnail ${selectedIndex === index ? "active" : ""}`}
-                onClick={() => setSelectedIndex(index)}
+                src={detailImages[selectedIndex].src}
+                alt={detailImages[selectedIndex].alt}
+                className="ppt-image"
               />
-            ))}
-          </div>
+              {detailImages.length > 1 && (
+                <>
+                  <div className="ppt-counter">
+                    {selectedIndex + 1}/{detailImages.length}
+                  </div>
+                  <button className="ppt-nav ppt-prev" onClick={prevSlide}>
+                    ❮
+                  </button>
+                  <button className="ppt-nav ppt-next" onClick={nextSlide}>
+                    ❯
+                  </button>
+                  <div className="ppt-thumbnails-container">
+                    <div className="ppt-thumbnails" ref={thumbnailRef}>
+                      {detailImages.map((img, index) => (
+                        <img
+                          key={index}
+                          src={img.src}
+                          alt={img.alt}
+                          className={`ppt-thumbnail ${selectedIndex === index ? "active" : ""}`}
+                          onClick={() => setSelectedIndex(index)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
           <div className="ppt-detail">
-            <p>
-              Đây là một mẫu PowerPoint hoàn hảo cho bài thuyết trình của bạn. Với thiết kế chuyên nghiệp và dễ sử dụng, 
-              mẫu này giúp bạn truyền tải thông điệp một cách hiệu quả. Nó có thể được sử dụng cho nhiều mục đích khác nhau, 
-              bao gồm giáo dục, doanh nghiệp, và tiếp thị.
-            </p>
+            <h2>{item.tieu_de}</h2>
+            <p><h3>Mẫu PowerPoint và Hình ảnh tải miễn phí</h3></p>
+            <p>{item.mo_ta || "Không có mô tả."}</p>
             <p>
               Chủ đề: <span className="text-highlight">Lịch sử, Giáo dục, Đơn giản, Kế hoạch</span>
             </p>
           </div>
 
-          {/* Tags */}
           <div className="ppt-tags">
             <span className="tag">Lịch sử</span>
             <span className="tag">Giáo dục</span>
@@ -90,111 +322,189 @@ const PPTTemplate = () => {
             <span className="tag">Kế hoạch</span>
             <span className="tag">Năm</span>
             <span className="tag">Đánh giá hiệu suất</span>
-            <span className="tag tag-more">+22</span> {/* Nút hiển thị thêm tag */}
+            <span className="tag tag-more">+22</span>
           </div>
         </div>
-        
-        {/* Info Section */}
+
         <div className="ppt-info">
           <p className="ppt-description">
-            Hình ảnh này có giấy phép bản quyền và có sẵn để sử dụng thương mại.
+            {isPowerpoint
+              ? "Mẫu PowerPoint này có giấy phép bản quyền và có sẵn để sử dụng thương mại."
+              : "Hình ảnh này có giấy phép bản quyền và có sẵn để sử dụng thương mại."}{" "}
+            Nâng cấp lên gói Premium cá nhân{" "}
+            <span className="text-orange">
+              Hoặc Nâng cấp lên thành viên cao cấp của công ty nhiên chính hãng để giấy phép.
+            </span>{" "}
+            <a href="#" className="text-orange">
+              Bấm vào đây
+            </a>
           </p>
-          <button className="ppt-btn ppt-btn-orange">📂 PowerPoint</button>
+          <button
+            className="ppt-btn ppt-btn-orange"
+            onClick={handleDownload}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "10px", fontSize: "16px" }}
+          >
+            <span style={{ marginRight: "5px" }}>
+              <i className="bx bxs-download"></i>
+            </span>{" "}
+            {isPowerpoint ? "PowerPoint" : "Hình ảnh"}
+          </button>
 
-          <div className="ppt-btn-group">
-            <button className="ppt-btn"><i class='bx bxs-info-circle' ></i> Thông tin</button>
-            <button className="ppt-btn"><i class='bx bxs-heart'></i> Yêu thích</button>
-            <button className="ppt-btn"><i class='bx bxs-share-alt' ></i> Chia sẻ</button>
+          <div className="ppt-btn-group" style={{ display: "flex", justifyContent: "space-between", margin: "10px 0" }}>
+            <button className="ppt-btn text-gray" style={{ flex: 1, marginRight: "5px" }}>
+              <i className="bx bxs-info-circle"></i> Thông tin
+            </button>
+            <button className="ppt-btn text-gray" style={{ flex: 1, marginRight: "5px" }}>
+              <i className="bx bxs-heart"></i> Giữ
+            </button>
+            <button className="ppt-btn text-gray" style={{ flex: 1 }}>
+              <i className="bx bxs-share-alt"></i> Chia sẻ
+            </button>
           </div>
 
-          {/* License */}
-          <h3 className="ppt-license">
-            Phạm vi ủy quyền: <span className="text-green">Giấy phép thương mại</span>
+          <h3 className="ppt-license" style={{ fontSize: "16px", margin: "10px 0" }}>
+            Phạm vi ủy quyền: <span className="text-orange">Giấy phép thương mại</span>
           </h3>
-          <div className="ppt-btn-group">
-            <button className="ppt-btn ppt-btn-green">Ủy quyền cá nhân</button>
-            <button className="ppt-btn ppt-btn-gray">Ủy quyền doanh nghiệp</button>
+          <h4 style={{ fontSize: "14px", margin: "5px 0" }}>
+            Đối tượng được ủy quyền: <span className="text-green">Cá nhân</span>{" "}
+            <span className="text-gray">Doanh nghiệp</span>
+          </h4>
+
+          <div className="ppt-license-details" style={{ margin: "10px 0" }}>
+            <img src="/img/giayphep.jpg" alt="Giấy phép" style={{ width: "100%", marginBottom: "10px" }} />
+            <ul style={{ listStyle: "none", padding: 0 }}>
+              <li style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
+                <span style={{ marginRight: "10px" }}>🔒</span> Đảm bảo bản quyền
+              </li>
+              <li style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
+                <span style={{ marginRight: "10px" }}>📜</span> Giấy phép PRF cho mục đích thương mại cá nhân
+              </li>
+              <li style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
+                <span style={{ marginRight: "10px" }}>🚫</span> Không cần phí chỉ thích nguồn tác phẩm
+              </li>
+              <li style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
+                <span style={{ marginRight: "10px" }}>📥</span> Tải xuống không giới hạn tài sản Premium
+              </li>
+              <li style={{ display: "flex", alignItems: "center" }}>
+                <span style={{ marginRight: "10px" }}>📄</span> Hóa đơn trực tuyến
+              </li>
+            </ul>
+          </div>
+
+          <div className="ppt-btn-group" style={{ display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
+            <button className="ppt-btn ppt-btn-gray" style={{ flex: 1, marginRight: "5px" }}>
+              <span style={{ marginRight: "5px" }}>📜</span> Giấy phép cá nhân
+            </button>
+            <button className="ppt-btn ppt-btn-green" style={{ flex: 1 }}>
+              <span style={{ marginRight: "5px" }}>📈</span> Nâng cấp ngay bây giờ
+            </button>
           </div>
         </div>
       </div>
-      <section className=" top-categories top">
+
+      {/* Phần đánh giá */}
+      <div className="ppt-reviews" style={{ marginTop: "30px", padding: "20px", backgroundColor: "#f9f9f9", borderRadius: "5px" }}>
+        <h2 style={{ fontSize: "24px", marginBottom: "20px" }}>Đánh giá</h2>
+        <div className="rating-summary" style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}>
+          <div className="average-rating" style={{ marginRight: "20px" }}>
+            <span style={{ fontSize: "32px", fontWeight: "bold" }}>{averageRating}</span>/5
+          </div>
+          <div className="stars">
+            {[...Array(5)].map((_, index) => (
+              <i
+                key={index}
+                className={`bx ${index < Math.round(averageRating) ? "bxs-star" : "bx-star"}`}
+                style={{ color: "#f39c12", fontSize: "24px" }}
+              ></i>
+            ))}
+          </div>
+          <span style={{ marginLeft: "10px", color: "#666" }}>({reviews.length} đánh giá)</span>
+        </div>
+
+        <div className="review-list">
+          {reviews.length === 0 ? (
+            <p>Chưa có đánh giá nào.</p>
+          ) : (
+            reviews.map((review, index) => (
+              <div
+                key={index}
+                className="review-item"
+                style={{
+                  padding: "15px",
+                  borderBottom: "1px solid #ddd",
+                  marginBottom: "10px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+                  <div>
+                    <span style={{ fontWeight: "bold" }}>{review.user}</span>
+                    <div className="stars">
+                      {[...Array(5)].map((_, i) => (
+                        <i
+                          key={i}
+                          className={`bx ${i < Math.round(review.rating) ? "bxs-star" : "bx-star"}`}
+                          style={{ color: "#f39c12", fontSize: "16px" }}
+                        ></i>
+                      ))}
+                    </div>
+                  </div>
+                  <span style={{ color: "#666", fontSize: "14px" }}>{review.date}</span>
+                </div>
+                <p style={{ margin: "5px 0 0 0" }}>{review.comment}</p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Mẫu PowerPoint thịnh hành */}
+      <section className="top-categories top">
         <h1 className="heading-1">Mẫu PowerPoint thịnh hành</h1>
         <div className="container-categories">
-          {[
-            { img: "/img/top-1.png", title: "Powerpoint chủ đề cầu vồng", free: true },
-            { img: "/img/top-2.png", title: "Find A Rainbow Day", free: true },
-            { img: "/img/top-3.png", title: "Arabic Style Marketing Plan", free: false },
-            { img: "/img/top-4.png", title: "Happy Father's Day", free: true },
-            { img: "/img/top-5.png", title: "Happy Father's Day", free: false },
-          ].map((category, index) => (
+          {relatedPowerpoints.slice(0, 5).map((category, index) => (
             <div className="card-category" key={index}>
-              {/* Ảnh template */}
-              <img src={category.img} alt={category.title} className="template-img" />
-
-              {/* Nút PowerPoint - hiển thị khi hover */}
+              <img src={category.duong_dan_anh_nho} alt={category.tieu_de} className="template-img" />
               <div className="overlay">
-                {/* Nhãn miễn phí */}
                 {category.free && <span className="badge-free">Miễn phí</span>}
                 <button className="download-btn">
                   <i className="bx bx-download"></i> PowerPoint
                 </button>
-                <p className="template-title">{category.title}</p>
+                <p className="template-title">{category.tieu_de}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
-      <section className=" top-categories top">
+
+      {/* Hình nền sáng tạo */}
+      <section className="top-categories top">
         <h1 className="heading-1">Hình nền sáng tạo</h1>
         <div className="container-categories">
-          {[
-            { img: "https://img4.thuthuatphanmem.vn/uploads/2020/06/22/anh-nen-anime-2k_092516251.jpg", title: "Bầu trời", free: true },
-            { img: "https://mega.com.vn/media/news/2707_nen-background-pp-chu-de-hoc-tap7.jpg", title: "Học tập", free: false },
-            { img: "https://png.pngtree.com/thumb_back/fh260/background/20240909/pngtree-chinese-new-year-red-background-with-hanging-lanterns-image_16133909.jpg", title: "Ngày lễ", free: true },
-            { img: "https://png.pngtree.com/thumb_back/fh260/background/20241231/pngtree-ancestor-worship-tomb-sweeping-day-image_16531970.jpg", title: "Khám phá", free: false },
-          ].map((category, index) => (
+          {relatedBackgrounds.slice(0, 4).map((category, index) => (
             <div className="card-category-1" key={index}>
-              {/* Ảnh template */}
-              <img src={category.img} alt={category.title} width={350} height={200}/>
-
-              {/* Nút PowerPoint - hiển thị khi hover */}
+              <img src={category.duong_dan_anh_nho} alt={category.tieu_de} width={350} height={200} />
               <div className="overlay">
-                {/* Nhãn miễn phí */}
                 {category.free && <span className="badge-free">Miễn phí</span>}
-                <button className="download-btn">
-                  Xem thêm về bộ sưu tập
-                </button>
-                <p className="template-title">{category.title}</p>
+                <button className="download-btn">Xem thêm về bộ sưu tập</button>
+                <p className="template-title">{category.tieu_de}</p>
               </div>
             </div>
           ))}
         </div>
         <div className="container-categories top">
-          {[
-            { img: "https://antimatter.vn/wp-content/uploads/2022/08/hinh-nen-bien.jpg", title: "Biển cả", free: true },
-            { img: "https://png.pngtree.com/background/20230427/original/pngtree-landscape-winter-snow-covered-japanese-village-with-a-bridge-covered-in-picture-image_2497611.jpg", title: "Mùa đông", free: false },
-            { img: "https://image.tienphong.vn/600x315/Uploaded/2023/rwbvhvobvvimsb/2021_09_06/6-nhom-trai-cay-de-an-buoi-sang-5711.jpg", title: "Hoa quả", free: true },
-            { img: "https://khoinguonsangtao.vn/wp-content/uploads/2022/09/hinh-nen-cay-xanh-4k-cho-may-tinh.jpg", title: "Khu rừng", free: false },
-          ].map((category, index) => (
+          {relatedBackgrounds.slice(4, 8).map((category, index) => (
             <div className="card-category-1" key={index}>
-              {/* Ảnh template */}
-              <img src={category.img} alt={category.title} width={350} height={200}/>
-
-              {/* Nút PowerPoint - hiển thị khi hover */}
+              <img src={category.duong_dan_anh_nho} alt={category.tieu_de} width={350} height={200} />
               <div className="overlay">
-                {/* Nhãn miễn phí */}
                 {category.free && <span className="badge-free">Miễn phí</span>}
-                <button className="download-btn">
-                  Xem thêm về bộ sưu tập
-                </button>
-                <p className="template-title">{category.title}</p>
+                <button className="download-btn">Xem thêm về bộ sưu tập</button>
+                <p className="template-title">{category.tieu_de}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
     </div>
-    
   );
 };
 

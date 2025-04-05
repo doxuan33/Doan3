@@ -1,90 +1,226 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
+import { Paginator } from "primereact/paginator";
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
-import "./App.css"; // Import file CSS riêng để hỗ trợ animation
+import "./App.css";
+import "./ppt.css";
+import { useNavigate } from "react-router-dom";
 
-function HomePage() {
+function PngPage() {
+  const [images, setImages] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Phân trang
+  const [first, setFirst] = useState(0);
+  const itemsPerPage = 16; // Updated to 16 items per page to display 16 images before paginating
+
+  const navigate = useNavigate();
+
+  // Fetch categories
+  useEffect(() => {
+    fetch("http://localhost:1000/danhmucs")
+      .then((response) => response.json())
+      .then((data) => {
+        setCategories(shuffleArray(data).slice(0, 5));
+        setLoadingCategories(false);
+      })
+      .catch((error) => {
+        console.error("Lỗi khi lấy danh mục:", error);
+        setLoadingCategories(false);
+      });
+  }, []);
+
+  // Fetch images based on selected category
+  useEffect(() => {
+    setLoading(true);
+    let url = "http://localhost:1000/hinhanhs";
+    if (selectedCategory) {
+      url += `?danh_muc_id=${selectedCategory.id}`;
+    }
+
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        setImages(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Lỗi khi lấy dữ liệu hình ảnh:", error);
+        setLoading(false);
+      });
+  }, [selectedCategory]);
+
+  const shuffleArray = (array) => {
+    return array.sort(() => Math.random() - 0.5);
+  };
+
+  const onPageChange = (event) => {
+    setFirst(event.first);
+  };
+
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
+    setFirst(0);
+  };
+
+  const handleDownload = async (image) => {
+    try {
+      // Validate the image URL
+      if (!image.duong_dan_anh_nho) {
+        throw new Error("Không tìm thấy đường dẫn hình ảnh để tải xuống.");
+      }
+  
+      // Get the token from localStorage
+      const token = localStorage.getItem("token");
+      let userId = null;
+  
+      // If token exists, fetch the user ID
+      if (token) {
+        const userResponse = await fetch("http://localhost:1000/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          userId = userData.user.id;
+        } else {
+          console.error("Failed to fetch user data:", userResponse.statusText);
+        }
+      }
+  
+      // Prepare the download history data
+      const downloadHistory = {
+        nguoi_dung_id: userId, // Will be null if user is not logged in
+        mau_powerpoint_id: null, // No PowerPoint ID since this is an image download
+        hinh_anh_id: image.id, // ID of the image being downloaded
+        // thoi_gian_tai is automatically set by the database
+      };
+  
+      // Send POST request to save download history
+      const response = await fetch("http://localhost:1000/lichsutaixuongs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }), // Include token if user is logged in
+        },
+        body: JSON.stringify(downloadHistory),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save download history");
+      }
+  
+      // Fetch the image as a blob
+      const fileResponse = await fetch(image.duong_dan_anh_nho, {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }), // Include token if required by the server
+        },
+      });
+  
+      if (!fileResponse.ok) {
+        throw new Error("Không thể tải hình ảnh: " + fileResponse.statusText);
+      }
+  
+      const blob = await fileResponse.blob();
+      const url = window.URL.createObjectURL(blob);
+  
+      // Create a temporary link to download the file
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = image.tieu_de || "image"; // Set a meaningful file name
+      document.body.appendChild(link);
+      link.click();
+  
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error during download:", error.message);
+      alert(`Có lỗi xảy ra khi tải xuống: ${error.message}`);
+    }
+  };
+
+  const handleImageClick = (image) => {
+    navigate("/about", { state: { image: image } }); // Navigate to PPTTemplate with image data
+  };
+
   return (
     <>
-      <section className=" top-categories top">
+      <section className="top-categories top">
+        <p className="left_content">
+          Trang chủ <i className="bx bx-chevron-right"></i> Hình ảnh
+        </p>
         <h1 className="heading-1">Hình ảnh và bộ sưu tập</h1>
-        <div className="container-categories">
-          {[
-            { img: "/img/noel-bg.png", title: "Lễ giáng sinh", free: true },
-            { img: "/img/ad3.jpg", title: "Ẩm thực", free: true },
-            { img: "https://thuthuatnhanh.com/wp-content/uploads/2021/01/hinh-anh-sapa-dep-thung-lung-hung-vi.jpg", title: "Quang cảnh", free: false },
-            { img: "https://img3.thuthuatphanmem.vn/uploads/2019/06/17/hinh-anh-dep-ngo-nghinh-ve-dong-vat_102855690.jpg", title: "Động vật", free: true },
-            { img: "https://antimatter.vn/wp-content/uploads/2022/06/anh-bau-troi-va-hoa.jpg", title: "Vường hoa", free: false },
-          ].map((category, index) => (
-            <div className="card-category" key={index}>
-              {/* Ảnh template */}
-              <img src={category.img} alt={category.title} className="template-img" />
 
-              {/* Nút PowerPoint - hiển thị khi hover */}
-              <div className="overlay">
-                {/* Nhãn miễn phí */}
-                {category.free && <span className="badge-free">Miễn phí</span>}
-                <button className="download-btn">
-                <i className="bx bx-download"></i> Download
+        <div className="content">
+          {loadingCategories ? (
+            <p>Đang tải danh mục...</p>
+          ) : (
+            <div className="buttons left_content">
+              <button onClick={() => handleCategoryClick(null)} className={!selectedCategory ? "active" : ""}>
+                Tất cả
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryClick(category)}
+                  className={selectedCategory?.id === category.id ? "active" : ""}
+                >
+                  {category.ten}
                 </button>
-                <p className="template-title">{category.title}</p>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      </section>
-      <section className=" top-categories top">
-        <h1 className="heading-1">Hình nền sáng tạo</h1>
-        <div className="container-categories">
-          {[
-            { img: "https://img4.thuthuatphanmem.vn/uploads/2020/06/22/anh-nen-anime-2k_092516251.jpg", title: "Bầu trời", free: true },
-            { img: "https://mega.com.vn/media/news/2707_nen-background-pp-chu-de-hoc-tap7.jpg", title: "Học tập", free: false },
-            { img: "https://png.pngtree.com/thumb_back/fh260/background/20240909/pngtree-chinese-new-year-red-background-with-hanging-lanterns-image_16133909.jpg", title: "Ngày lễ", free: true },
-            { img: "https://png.pngtree.com/thumb_back/fh260/background/20241231/pngtree-ancestor-worship-tomb-sweeping-day-image_16531970.jpg", title: "Khám phá", free: false },
-          ].map((category, index) => (
-            <div className="card-category-1" key={index}>
-              {/* Ảnh template */}
-              <img src={category.img} alt={category.title} width={350} height={200}/>
 
-              {/* Nút PowerPoint - hiển thị khi hover */}
-              <div className="overlay">
-                {/* Nhãn miễn phí */}
-                {category.free && <span className="badge-free">Miễn phí</span>}
-                <button className="download-btn">
-                  Xem thêm về bộ sưu tập
-                </button>
-                <p className="template-title">{category.title}</p>
+        <div className="container-categories-1 top">
+          {loading ? (
+            <p>Đang tải dữ liệu...</p>
+          ) : images.length === 0 ? (
+            <p>Không có hình ảnh nào.</p>
+          ) : (
+            images.slice(first, first + itemsPerPage).map((image, index) => (
+              <div className="card-category-1" key={index} onClick={() => handleImageClick(image)}>
+                <img
+                  src={image.duong_dan_anh_nho}
+                  alt={image.tieu_de}
+                  width={350}
+                  height={200}
+                />
+                <div className="overlay">
+                  {image.mien_phi && <span className="badge-free">Miễn phí</span>}
+                  <button
+                    className="download-btn"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent parent click event
+                      handleDownload(image);
+                    }}
+                  >
+                    Tải Hình ảnh
+                  </button>
+                  <p className="template-title">{image.tieu_de}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
-        <div className="container-categories top">
-          {[
-            { img: "https://antimatter.vn/wp-content/uploads/2022/08/hinh-nen-bien.jpg", title: "Biển cả", free: true },
-            { img: "https://png.pngtree.com/background/20230427/original/pngtree-landscape-winter-snow-covered-japanese-village-with-a-bridge-covered-in-picture-image_2497611.jpg", title: "Mùa đông", free: false },
-            { img: "https://image.tienphong.vn/600x315/Uploaded/2023/rwbvhvobvvimsb/2021_09_06/6-nhom-trai-cay-de-an-buoi-sang-5711.jpg", title: "Hoa quả", free: true },
-            { img: "https://khoinguonsangtao.vn/wp-content/uploads/2022/09/hinh-nen-cay-xanh-4k-cho-may-tinh.jpg", title: "Khu rừng", free: false },
-          ].map((category, index) => (
-            <div className="card-category-1" key={index}>
-              {/* Ảnh template */}
-              <img src={category.img} alt={category.title} width={350} height={200}/>
 
-              {/* Nút PowerPoint - hiển thị khi hover */}
-              <div className="overlay">
-                {/* Nhãn miễn phí */}
-                {category.free && <span className="badge-free">Miễn phí</span>}
-                <button className="download-btn">
-                  Xem thêm về bộ sưu tập
-                </button>
-                <p className="template-title">{category.title}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <Paginator
+          first={first}
+          rows={itemsPerPage}
+          totalRecords={images.length}
+          onPageChange={onPageChange}
+        />
       </section>
     </>
   );
 }
 
-export default HomePage;
+export default PngPage;

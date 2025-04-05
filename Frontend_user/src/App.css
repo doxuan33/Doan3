@@ -648,6 +648,15 @@ a:hover {
 	width: 90%;
 	margin: 0 auto;
 }
+.container-categories-1 {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr); /* 4 columns */
+	gap: 20px; /* Adjust spacing between items */
+  }
+  .card-category-1 {
+	width: 350px; /* As specified in the img width */
+	height: auto;
+  }
   .card-category {
 	position: relative;
 	width: 270px;
@@ -749,42 +758,6 @@ a:hover {
 	opacity: 1;
   }
   
-/* ********************************** */
-/*            TOP PRODUCTS            */
-/* ********************************** */
-.top-products {
-	display: flex;
-	flex-direction: column;
-	gap: 2rem;
-	margin-bottom: 3rem;
-}
-
-.container-options {
-	display: flex;
-	justify-content: center;
-	gap: 2rem;
-	margin-bottom: 1rem;
-}
-
-.container-options span {
-	color: #777;
-	background-color: #fff;
-	padding: 0.7rem 3rem;
-	font-size: 1.4rem;
-	text-transform: capitalize;
-	border-radius: 2rem;
-	cursor: pointer;
-}
-
-.container-options span:hover {
-	background-color: var(--promary-color);
-	color: #fff;
-}
-
-.container-options span.active {
-	background-color: var(--promary-color);
-	color: #fff;
-}
 
 /* ********************************** */
 /*               GALLERY              */

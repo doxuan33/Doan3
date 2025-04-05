@@ -142,7 +142,10 @@ const Download = () => {
                         globalFilter={globalFilter}
                         header={renderHeader()}
                     >
-                        <Column field="id" header="ID" sortable style={{ minWidth: "5rem" }} />
+                        <Column 
+                            header="STT" 
+                            body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: "4rem", textAlign: "center" }} 
+                        />
                         <Column field="nguoi_dung_id" header="ID Người Dùng" sortable style={{ minWidth: "10rem" }} />
                         <Column field="mau_powerpoint_id" header="ID PowerPoint" sortable style={{ minWidth: "10rem" }} />
                         <Column field="thoi_gian_tai" header="Thời Gian" body={(rowData) => formatDate(rowData.thoi_gian_tai)} sortable style={{ minWidth: "14rem" }} />

@@ -5,7 +5,7 @@
     padding: 20px;
     background: white;
     border-radius: 8px;
-    padding-top: 3rem;
+    padding-top: 2rem;
   }
   
   .ppt-title {
@@ -49,7 +49,7 @@
 /* Nút điều hướng */
 .ppt-nav {
   position: absolute;
-  top: 30%;
+  top: 25%;
   transform: translateY(-50%);
   background: rgba(0, 0, 0, 0.4); /* Mờ nhẹ */
   color: rgba(247, 245, 245, 0.747);
@@ -122,6 +122,19 @@
 .ppt-thumbnail:hover {
     border-color: orange;
 }
+.ppt-thumbnails-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.ppt-thumbnails::-webkit-scrollbar {
+  display: none; /* Ẩn thanh cuộn trên Chrome, Safari */
+}
+
+.ppt-thumbnails img.active {
+  border: 2px solid #f39c12;
+}
+
   /* Info Section */
   .ppt-info {
     flex: 1;
@@ -130,41 +143,56 @@
     gap: 12px;
     padding: 0 30px;
   }
-  
   .ppt-description {
-    color: gray;
+    font-size: 14px;
+    color: #333;
   }
-  
+  .ppt-license-details{
+    display: flex;
+    gap: 20px;
+  }
   .ppt-btn {
-    padding: 10px 16px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    background: #fff;
     border-radius: 5px;
     font-size: 14px;
     cursor: pointer;
-    border: none;
-    background: rgba(230, 229, 229, 0.853);
-    color: #666;
   }
   
   .ppt-btn-orange {
-    background: orange;
-    color: white;
+    background: #ff6200;
+    color: #fff;
+    border: none;
   }
   
   .ppt-btn-green {
-    background: green;
-    color: white;
+    background: #28a745;
+    color: #fff;
+    border: none;
   }
   
   .ppt-btn-gray {
-    background: gray;
-    color: white;
+    background: #f0f0f0;
+    color: #333;
+    border: none;
   }
   
+  .text-orange {
+    color: #ff6200;
+  }
+  
+  .text-green {
+    color: #28a745;
+  }
+  
+  .text-gray {
+    color: #666;
+  }
   .ppt-btn-group {
     display: flex;
     gap: 10px;
   }
-  
   .ppt-license {
     font-size: 16px;
     font-weight: bold;
@@ -209,4 +237,36 @@
 .tag-more {
   background: #d4f4d2;
   color: #2d8f2d;
+}
+.ppt-reviews {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 5px;
+  margin-top: 30px;
+}
+
+.rating-summary {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.average-rating {
+  font-size: 32px;
+  font-weight: bold;
+  margin-right: 20px;
+}
+
+.stars i {
+  margin-right: 5px;
+}
+
+.review-item {
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+}
+
+.review-item:last-child {
+  border-bottom: none;
 }
