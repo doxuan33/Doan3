@@ -1,6 +1,12 @@
 const DanhGia = require("../models/danhgia.model");
 
 module.exports = {
+  getTotal: (req, res) => {
+    DanhGia.getTotal((err, total) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(total);
+          });
+        },
   // Get all reviews for a specific PowerPoint template
   getAllByPowerPointId: (req, res) => {
     const mauPowerPointId = req.params.mauPowerPointId;

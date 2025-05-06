@@ -13,6 +13,12 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 module.exports = {
+  getTotal: (req, res) => {
+    MauPowerpoint.getTotal((err, total) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(total);
+      });
+    },
   getTopDownloads: (req, res) => {
     MauPowerpoint.getTopDownloads((err, results) => {
         if (err) return res.status(500).json({ error: "Lỗi truy vấn cơ sở dữ liệu!" });
@@ -20,9 +26,14 @@ module.exports = {
     });
   },
   getAll: (req, res) => {
-    MauPowerpoint.getAll((err, result) => {
+    const params = {
+      search: req.query.search,
+      danh_muc_id: req.query.danh_muc_id ? parseInt(req.query.danh_muc_id) : null,
+    };
+
+    MauPowerpoint.getAll(params, (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.status(200).json(result.length ? result : { message: "Không có dữ liệu" });
+      res.status(200).json(result.length ? result : []);
     });
   },
 
@@ -58,15 +69,15 @@ module.exports = {
         if (danh_muc_key && isNaN(danh_muc_id)) {
           return res.status(400).json({ error: "danh_muc_id phải là số!" });
         }
-
         const mauPowerpoint = {
-          tieu_de,
-          mo_ta,
-          danh_muc_id,
+          tieu_de: tieu_de || null, 
+          mo_ta: mo_ta || null,
+          danh_muc_id: danh_muc_id || null,
           duong_dan_tap_tin: req.files?.file ? "/uploads/" + req.files["file"][0].filename : null,
-          duong_dan_anh_nho: req.files?.thumbnail ? "/uploads/" + req.files["thumbnail"][0].filename : null,
+          duong_dan_anh_nho: req.files?.thumbnail ? "http://localhost:1000/uploads/" + req.files["thumbnail"][0].filename : null,
+          la_pro: req.body.la_pro ? req.body.la_pro === "true" : false,
+          gia: req.body.gia ? parseFloat(req.body.gia) : null,
         };
-
         MauPowerpoint.insert(mauPowerpoint, (err, result) => {
           if (err) return res.status(500).json({ error: err.message });
           res.status(201).json({ message: "Thêm mẫu PowerPoint thành công!", data: result });
@@ -102,10 +113,16 @@ module.exports = {
           return res.status(400).json({ error: "danh_muc_id phải là số!" });
         }
 
-        const mauPowerpoint = { tieu_de, mo_ta, danh_muc_id };
-
+        const mauPowerpoint = {
+          tieu_de: tieu_de || null,
+          mo_ta: mo_ta || null,
+          danh_muc_id: danh_muc_id || null,
+          la_pro: req.body.la_pro ? req.body.la_pro === "true" : undefined,
+          gia: req.body.gia ? parseFloat(req.body.gia) : undefined,
+        };
+        
         if (req.files?.file) mauPowerpoint.duong_dan_tap_tin = "/uploads/" + req.files["file"][0].filename;
-        if (req.files?.thumbnail) mauPowerpoint.duong_dan_anh_nho = "/uploads/" + req.files["thumbnail"][0].filename;
+        if (req.files?.thumbnail) mauPowerpoint.duong_dan_anh_nho = "http://localhost:1000/uploads/" + req.files["thumbnail"][0].filename;
 
         MauPowerpoint.update(mauPowerpoint, id, (err, result) => {
           if (err) return res.status(500).json({ error: err.message });
@@ -125,7 +142,6 @@ module.exports = {
       if (err) return res.status(500).json({ error: err.message });
       if (!result) return res.status(404).json({ message: "Không tìm thấy mẫu PowerPoint!" });
       
-      // Xóa file nếu tồn tại
       const deleteFile = (filePath) => {
         if (filePath) {
           const fullPath = path.join(__dirname, "..", filePath);
@@ -140,7 +156,6 @@ module.exports = {
       deleteFile(result.duong_dan_tap_tin);
       deleteFile(result.duong_dan_anh_nho);
 
-      // Xóa khỏi DB
       MauPowerpoint.delete(id, (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.status(200).json({ message: "Xóa thành công!" });

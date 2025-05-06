@@ -21,9 +21,14 @@ module.exports = {
   },
 
   getAll: (req, res) => {
-    HinhAnh.getAll((err, result) => {
+    const params = {
+      search: req.query.search,
+      danh_muc_id: req.query.danh_muc_id ? parseInt(req.query.danh_muc_id) : null,
+    };
+
+    HinhAnh.getAll(params, (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.status(200).json(result.length ? result : { message: "Không có dữ liệu" });
+      res.status(200).json(result.length ? result : []);
     });
   },
 
