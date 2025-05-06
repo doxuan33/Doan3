@@ -5,7 +5,7 @@ import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "./App.css";
 import "./ppt.css";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function PngPage() {
   const [images, setImages] = useState([]);
@@ -13,34 +13,75 @@ function PngPage() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [favorites, setFavorites] = useState([]);
 
-  // Phân trang
+  // Pagination
   const [first, setFirst] = useState(0);
-  const itemsPerPage = 16; // Updated to 16 items per page to display 16 images before paginating
+  const itemsPerPage = 16; // Display 16 items per page
 
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Fetch categories
+  // Parse query parameters from URL
+  const queryParams = new URLSearchParams(location.search);
+  const categoryFromUrl = queryParams.get("category");
+
+  // Load favorites from localStorage when component mounts
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem("favorites");
+    if (storedFavorites) {
+      try {
+        setFavorites(JSON.parse(storedFavorites));
+      } catch (error) {
+        console.error("Error parsing favorites from localStorage:", error);
+        setFavorites([]);
+      }
+    }
+  }, []);
+
+  // Save favorites to localStorage when favorites change
+  useEffect(() => {
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+  }, [favorites]);
+
+  // Fetch categories and set selected category from URL
   useEffect(() => {
     fetch("http://localhost:1000/danhmucs")
       .then((response) => response.json())
       .then((data) => {
         setCategories(shuffleArray(data).slice(0, 5));
         setLoadingCategories(false);
+
+        // If a category is passed in the URL, find and set it
+        if (categoryFromUrl) {
+          const matchedCategory = data.find(
+            (cat) => cat.ten.toLowerCase() === categoryFromUrl.toLowerCase()
+          );
+          if (matchedCategory) {
+            setSelectedCategory(matchedCategory);
+          }
+        }
       })
       .catch((error) => {
         console.error("Lỗi khi lấy danh mục:", error);
         setLoadingCategories(false);
       });
-  }, []);
+  }, [categoryFromUrl]);
 
-  // Fetch images based on selected category
-  useEffect(() => {
+  // Fetch Images based on category and search query
+  const fetchImages = (searchQuery = "") => {
     setLoading(true);
     let url = "http://localhost:1000/hinhanhs";
+    const params = new URLSearchParams();
+
     if (selectedCategory) {
-      url += `?danh_muc_id=${selectedCategory.id}`;
+      params.append("danh_muc_id", selectedCategory.id);
     }
+    if (searchQuery) {
+      params.append("search", searchQuery);
+    }
+
+    url += params.toString() ? `?${params.toString()}` : "";
 
     fetch(url)
       .then((response) => response.json())
@@ -52,7 +93,20 @@ function PngPage() {
         console.error("Lỗi khi lấy dữ liệu hình ảnh:", error);
         setLoading(false);
       });
-  }, [selectedCategory]);
+  };
+
+  // Handle search results or fetch Images based on category/search
+  useEffect(() => {
+    const searchResults = location.state?.searchResults;
+    const searchQuery = location.state?.searchQuery;
+
+    if (searchResults && searchQuery) {
+      setImages(searchResults);
+      setLoading(false);
+    } else {
+      fetchImages(searchQuery || "");
+    }
+  }, [location.state, selectedCategory]);
 
   const shuffleArray = (array) => {
     return array.sort(() => Math.random() - 0.5);
@@ -65,27 +119,25 @@ function PngPage() {
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
     setFirst(0);
+    navigate(`/png${category ? `?category=${encodeURIComponent(category.ten)}` : ""}`);
   };
 
   const handleDownload = async (image) => {
     try {
-      // Validate the image URL
       if (!image.duong_dan_anh_nho) {
         throw new Error("Không tìm thấy đường dẫn hình ảnh để tải xuống.");
       }
-  
-      // Get the token from localStorage
+
       const token = localStorage.getItem("token");
       let userId = null;
-  
-      // If token exists, fetch the user ID
+
       if (token) {
         const userResponse = await fetch("http://localhost:1000/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-  
+
         if (userResponse.ok) {
           const userData = await userResponse.json();
           userId = userData.user.id;
@@ -93,52 +145,46 @@ function PngPage() {
           console.error("Failed to fetch user data:", userResponse.statusText);
         }
       }
-  
-      // Prepare the download history data
+
       const downloadHistory = {
-        nguoi_dung_id: userId, // Will be null if user is not logged in
-        mau_powerpoint_id: null, // No PowerPoint ID since this is an image download
-        hinh_anh_id: image.id, // ID of the image being downloaded
-        // thoi_gian_tai is automatically set by the database
+        nguoi_dung_id: userId,
+        mau_powerpoint_id: null,
+        hinh_anh_id: image.id,
       };
-  
-      // Send POST request to save download history
+
       const response = await fetch("http://localhost:1000/lichsutaixuongs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }), // Include token if user is logged in
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify(downloadHistory),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to save download history");
       }
-  
-      // Fetch the image as a blob
+
       const fileResponse = await fetch(image.duong_dan_anh_nho, {
         headers: {
-          ...(token && { Authorization: `Bearer ${token}` }), // Include token if required by the server
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
       });
-  
+
       if (!fileResponse.ok) {
         throw new Error("Không thể tải hình ảnh: " + fileResponse.statusText);
       }
-  
+
       const blob = await fileResponse.blob();
       const url = window.URL.createObjectURL(blob);
-  
-      // Create a temporary link to download the file
+
       const link = document.createElement("a");
       link.href = url;
-      link.download = image.tieu_de || "image"; // Set a meaningful file name
+      link.download = image.tieu_de || "image";
       document.body.appendChild(link);
       link.click();
-  
-      // Clean up
+
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
@@ -148,23 +194,47 @@ function PngPage() {
   };
 
   const handleImageClick = (image) => {
-    navigate("/about", { state: { image: image } }); // Navigate to PPTTemplate with image data
+    navigate("/about", { state: { image: image, favorites } });
+  };
+
+  const handleFavoriteClick = (image, e) => {
+    e.stopPropagation();
+    setFavorites((prevFavorites) => {
+      const isFavorited = prevFavorites.some((fav) => fav.id === image.id);
+      if (isFavorited) {
+        return prevFavorites.filter((fav) => fav.id !== image.id);
+      } else {
+        return [...prevFavorites, image];
+      }
+    });
   };
 
   return (
     <>
-      <section className="top-categories top">
+      <section className="top-categories-1">
         <p className="left_content">
           Trang chủ <i className="bx bx-chevron-right"></i> Hình ảnh
+          {selectedCategory && (
+            <>
+              <i className="bx bx-chevron-right"></i> {selectedCategory.ten}
+            </>
+          )}
         </p>
-        <h1 className="heading-1">Hình ảnh và bộ sưu tập</h1>
+        <h1 className="heading-1">
+          {location.state?.searchQuery
+            ? `Kết quả tìm kiếm cho "${location.state.searchQuery}"`
+            : "Hình ảnh và bộ sưu tập"}
+        </h1>
 
         <div className="content">
           {loadingCategories ? (
             <p>Đang tải danh mục...</p>
           ) : (
             <div className="buttons left_content">
-              <button onClick={() => handleCategoryClick(null)} className={!selectedCategory ? "active" : ""}>
+              <button
+                onClick={() => handleCategoryClick(null)}
+                className={!selectedCategory ? "active" : ""}
+              >
                 Tất cả
               </button>
               {categories.map((category) => (
@@ -180,14 +250,18 @@ function PngPage() {
           )}
         </div>
 
-        <div className="container-categories-1 top">
+        <div className="container-categories-1 top left_content">
           {loading ? (
             <p>Đang tải dữ liệu...</p>
           ) : images.length === 0 ? (
             <p>Không có hình ảnh nào.</p>
           ) : (
             images.slice(first, first + itemsPerPage).map((image, index) => (
-              <div className="card-category-1" key={index} onClick={() => handleImageClick(image)}>
+              <div
+                className="card-category-1"
+                key={index}
+                onClick={() => handleImageClick(image)}
+              >
                 <img
                   src={image.duong_dan_anh_nho}
                   alt={image.tieu_de}
@@ -195,11 +269,20 @@ function PngPage() {
                   height={200}
                 />
                 <div className="overlay">
-                  {image.mien_phi && <span className="badge-free">Miễn phí</span>}
+                  <i
+                    className={`pi pi-heart${
+                      favorites.some((fav) => fav.id === image.id) ? "-fill" : ""
+                    } favorite-icon`}
+                    onClick={(e) => handleFavoriteClick(image, e)}
+                  ></i>
+                  {/* Hiển thị badge dựa trên la_pro */}
+                  <span className={image.la_pro ? "badge-pro" : "badge-free"}>
+                    {image.la_pro ? "Pro" : "Miễn phí"}
+                  </span>
                   <button
                     className="download-btn"
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent parent click event
+                      e.stopPropagation();
                       handleDownload(image);
                     }}
                   >

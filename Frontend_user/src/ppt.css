@@ -5,7 +5,7 @@
     padding: 20px;
     background: white;
     border-radius: 8px;
-    padding-top: 2rem;
+    padding-top: 160px;
   }
   
   .ppt-title {
@@ -269,4 +269,30 @@
 
 .review-item:last-child {
   border-bottom: none;
+}
+.favorite_button{
+  display: flex;
+}
+.badge-pro {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #ff9800; 
+  color: white;
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.badge-free {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #4caf50; 
+  color: white;
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
 }

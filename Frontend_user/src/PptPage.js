@@ -5,7 +5,7 @@ import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "./App.css";
 import "./ppt.css";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function PptPage() {
   const [powerpoints, setPowerpoints] = useState([]);
@@ -13,32 +13,75 @@ function PptPage() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [favorites, setFavorites] = useState([]);
 
-  // Phân trang
+  // Pagination
   const [first, setFirst] = useState(0);
   const itemsPerPage = 20;
 
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // Parse query parameters from URL
+  const queryParams = new URLSearchParams(location.search);
+  const categoryFromUrl = queryParams.get("category");
+
+  // Load favorites from localStorage when component mounts
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem("favorites");
+    if (storedFavorites) {
+      try {
+        setFavorites(JSON.parse(storedFavorites));
+      } catch (error) {
+        console.error("Error parsing favorites from localStorage:", error);
+        setFavorites([]);
+      }
+    }
+  }, []);
+
+  // Save favorites to localStorage when favorites change
+  useEffect(() => {
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+  }, [favorites]);
+
+  // Fetch categories and set selected category from URL
   useEffect(() => {
     fetch("http://localhost:1000/danhmucs")
       .then((response) => response.json())
       .then((data) => {
         setCategories(shuffleArray(data).slice(0, 5));
         setLoadingCategories(false);
+
+        // If a category is passed in the URL, find and set it
+        if (categoryFromUrl) {
+          const matchedCategory = data.find(
+            (cat) => cat.ten.toLowerCase() === categoryFromUrl.toLowerCase()
+          );
+          if (matchedCategory) {
+            setSelectedCategory(matchedCategory);
+          }
+        }
       })
       .catch((error) => {
         console.error("Lỗi khi lấy danh mục:", error);
         setLoadingCategories(false);
       });
-  }, []);
+  }, [categoryFromUrl]);
 
-  useEffect(() => {
+  // Fetch PowerPoints based on category and search query
+  const fetchPowerPoints = (searchQuery = "") => {
     setLoading(true);
     let url = "http://localhost:1000/maupowerpoints";
+    const params = new URLSearchParams();
+
     if (selectedCategory) {
-      url += `?danh_muc_id=${selectedCategory.id}`;
+      params.append("danh_muc_id", selectedCategory.id);
     }
+    if (searchQuery) {
+      params.append("search", searchQuery);
+    }
+
+    url += params.toString() ? `?${params.toString()}` : "";
 
     fetch(url)
       .then((response) => response.json())
@@ -50,7 +93,20 @@ function PptPage() {
         console.error("Lỗi khi lấy dữ liệu PowerPoint:", error);
         setLoading(false);
       });
-  }, [selectedCategory]);
+  };
+
+  // Handle search results or fetch PowerPoints based on category/search
+  useEffect(() => {
+    const searchResults = location.state?.searchResults;
+    const searchQuery = location.state?.searchQuery;
+
+    if (searchResults && searchQuery) {
+      setPowerpoints(searchResults);
+      setLoading(false);
+    } else {
+      fetchPowerPoints(searchQuery || "");
+    }
+  }, [location.state, selectedCategory]);
 
   const shuffleArray = (array) => {
     return array.sort(() => Math.random() - 0.5);
@@ -63,15 +119,14 @@ function PptPage() {
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
     setFirst(0);
+    navigate(`/ppt${category ? `?category=${encodeURIComponent(category.ten)}` : ""}`);
   };
 
   const handleDownload = async (ppt) => {
     try {
-      // Get the token from localStorage
       const token = localStorage.getItem("token");
       let userId = null;
 
-      // If token exists, fetch the user ID
       if (token) {
         const userResponse = await fetch("http://localhost:1000/auth/me", {
           headers: {
@@ -87,20 +142,17 @@ function PptPage() {
         }
       }
 
-      // Prepare the download history data
       const downloadHistory = {
-        nguoi_dung_id: userId, // Will be null if user is not logged in
-        mau_powerpoint_id: ppt.id, // ID of the PowerPoint being downloaded
-        hinh_anh_id: null, // No image ID since this is a PowerPoint download
-        // thoi_gian_tai is automatically set by the database
+        nguoi_dung_id: userId,
+        mau_powerpoint_id: ppt.id,
+        hinh_anh_id: null,
       };
 
-      // Send POST request to save download history
       const response = await fetch("http://localhost:1000/lichsutaixuongs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }), // Include token if user is logged in
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify(downloadHistory),
       });
@@ -109,36 +161,62 @@ function PptPage() {
         throw new Error("Failed to save download history");
       }
 
-      // Proceed with the file download
       const link = document.createElement("a");
       link.href = `http://localhost:1000${ppt.duong_dan_tap_tin}`;
       link.download = true;
       link.click();
     } catch (error) {
       console.error("Error during download:", error);
-      // Optionally, show an error message to the user
       alert("Có lỗi xảy ra khi tải xuống. Vui lòng thử lại!");
     }
   };
 
   const handlePowerPointClick = (ppt) => {
-    navigate("/about", { state: { powerpoint: ppt } });
+    navigate("/about", { state: { powerpoint: ppt, favorites } });
+  };
+
+  const handleFavoriteClick = (ppt, e) => {
+    e.stopPropagation();
+    setFavorites((prevFavorites) => {
+      const isFavorited = prevFavorites.some((fav) => fav.id === ppt.id);
+      if (isFavorited) {
+        return prevFavorites.filter((fav) => fav.id !== ppt.id);
+      } else {
+        return [...prevFavorites, ppt];
+      }
+    });
+  };
+
+  const navigateToUserPage = () => {
+    navigate("/user", { state: { favorites } });
   };
 
   return (
     <>
-      <section className="top-categories">
+      <section className="top-categories-1">
         <p className="left_content">
           Trang chủ <i className="bx bx-chevron-right"></i> PowerPoint
+          {selectedCategory && (
+            <>
+              <i className="bx bx-chevron-right"></i> {selectedCategory.ten}
+            </>
+          )}
         </p>
-        <h1 className="heading-1">Mẫu PowerPoint Miễn Phí và Google Trang Trình Bày</h1>
+        <h1 className="heading-1">
+          {location.state?.searchQuery
+            ? `Kết quả tìm kiếm cho "${location.state.searchQuery}"`
+            : "Mẫu PowerPoint Miễn Phí và Google Trang Trình Bày"}
+        </h1>
 
-        <div className="content">
+        <div className="content left_content">
           {loadingCategories ? (
             <p>Đang tải danh mục...</p>
           ) : (
-            <div className="buttons left_content">
-              <button onClick={() => handleCategoryClick(null)} className={!selectedCategory ? "active" : ""}>
+            <div className="buttons">
+              <button
+                onClick={() => handleCategoryClick(null)}
+                className={!selectedCategory ? "active" : ""}
+              >
                 Tất cả
               </button>
               {categories.map((category) => (
@@ -158,22 +236,35 @@ function PptPage() {
           {loading ? (
             <p>Đang tải dữ liệu...</p>
           ) : powerpoints.length === 0 ? (
-            <p>Không có mẫu PowerPoint nào.</p>
+            <p>Không tìm thấy mẫu PowerPoint nào.</p>
           ) : (
             powerpoints.slice(first, first + itemsPerPage).map((ppt, index) => (
-              <div className="card-category" key={index} onClick={() => handlePowerPointClick(ppt)}>
+              <div
+                className="card-category"
+                key={index}
+                onClick={() => handlePowerPointClick(ppt)}
+              >
                 <img
                   src={ppt.duong_dan_anh_nho}
                   alt={ppt.tieu_de}
                   className="template-img"
                 />
                 <div className="overlay">
-                  {ppt.mien_phi && <span className="badge-free">Miễn phí</span>}
+                  <i
+                    className={`pi pi-heart${
+                      favorites.some((fav) => fav.id === ppt.id) ? "-fill" : ""
+                    } favorite-icon`}
+                    onClick={(e) => handleFavoriteClick(ppt, e)}
+                  ></i>
+                  {/* Hiển thị badge dựa trên la_pro */}
+                  <span className={ppt.la_pro ? "badge-pro" : "badge-free"}>
+                    {ppt.la_pro ? <i class='bx bxs-crown'></i> : "Miễn phí"}
+                  </span>
                   <button
                     className="download-btn"
                     onClick={(e) => {
-                      e.stopPropagation(); // Ngăn sự kiện click cha
-                      handleDownload(ppt); // Pass the entire ppt object
+                      e.stopPropagation();
+                      handleDownload(ppt);
                     }}
                   >
                     <i className="bx bx-download"></i> PowerPoint

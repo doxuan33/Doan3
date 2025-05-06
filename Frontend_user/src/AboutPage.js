@@ -76,7 +76,8 @@ const PPTTemplate = () => {
                 tieu_de: item.tieu_de,
                 duong_dan_anh_nho: item.duong_dan_anh_nho,
                 mo_ta: item.mo_ta,
-                free: false,
+                la_pro: item.la_pro, // Lấy la_pro
+                gia: item.gia, // Lấy gia
               }))
             : [];
           setRelatedPowerpoints(powerpoints);
@@ -96,7 +97,8 @@ const PPTTemplate = () => {
                 tieu_de: item.tieu_de,
                 duong_dan_anh_nho: item.duong_dan_anh_nho,
                 mo_ta: item.mo_ta,
-                free: false,
+                la_pro: item.la_pro, // Lấy la_pro
+                gia: item.gia, // Lấy gia
               }))
             : [];
           setRelatedBackgrounds(backgrounds);
@@ -168,85 +170,218 @@ const PPTTemplate = () => {
 
   const handleDownload = async () => {
     try {
-      // Validate the URL before proceeding
-      const downloadUrl = isPowerpoint
-        ? `http://localhost:1000${item.duong_dan_tap_tin}` // Prepend for PowerPoints
-        : item.duong_dan_anh_nho; // Use as-is for images since it already includes http://localhost:1000
-  
-      if (!downloadUrl) {
-        throw new Error("Không tìm thấy đường dẫn tệp để tải xuống.");
-      }
-  
-      // Get the token from localStorage
-      const token = localStorage.getItem("token");
-      let userId = null;
-  
-      // If token exists, fetch the user ID
-      if (token) {
-        const userResponse = await fetch("http://localhost:1000/auth/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      // Show dialog if la_pro is true without proceeding to save duong_dan_tap_tin
+      if (isPowerpoint && item.la_pro) {
+        const dialog = document.createElement("div");
+        dialog.className = "dialog-overlay";
+        dialog.innerHTML = `
+          <div class="dialog-content">
+            <button class="dialog-close">×</button>
+            <h2>Mở khóa các tính năng và nội dung cao cấp</h2>
+            <p>Học và nâng cấp lên thành viên cao cấp. Hoặc đăng nhập nếu bạn đã là thành viên.</p>
+            <div class="dialog-countdown">
+              <span class="countdown-label">GIÁM GIÁ COUNTDOWN</span>
+              <span class="countdown-time">55 MIN 27 S 28 MS</span>
+            </div>
+            <div class="dialog-features">
+              <div class="feature-item">
+                <span class="feature-icon">🔍</span>
+                <span>Tài khoản giới hạn</span>
+              </div>
+              <div class="feature-item">
+                <span class="feature-icon">🤖</span>
+                <span>Công cụ với tính năng AI</span>
+              </div>
+              <div class="feature-item">
+                <span class="feature-icon">©</span>
+                <span>Ưu quyền nhân bản</span>
+              </div>
+              <div class="feature-item toggle">
+                <span>Gói một năm</span>
+                <label class="switch">
+                  <input type="checkbox">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="dialog-price">
+              <span class="highlight">ƯU ĐÃI ĐẶC BIỆT!</span>
+              <span class="price">$6 USD/tháng</span>
+            </div>
+            <button class="dialog-button">Mua Ngay</button>
+            <p class="dialog-cancel">Hủy bất cứ lúc nào</p>
+          </div>
+        `;
+        document.body.appendChild(dialog);
+
+        // Add styles
+        const style = document.createElement("style");
+        style.textContent = `
+          .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+          }
+          .dialog-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            position: relative;
+            width: 500px; /* Increased width for better appearance */
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          }
+          .dialog-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border: none;
+            background: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+          }
+          .dialog-content h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+          }
+          .dialog-content p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+          }
+          .dialog-countdown {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #f39c12;
+            font-weight: bold;
+            margin: 15px 0;
+            font-size: 16px;
+          }
+          .countdown-label {
+            margin-right: 10px;
+          }
+          .countdown-time {
+            background: #f39c12;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+          }
+          .dialog-features {
+            margin: 20px 0;
+            text-align: left;
+          }
+          .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #333;
+          }
+          .feature-icon {
+            margin-right: 10px;
+            font-size: 20px;
+          }
+          .feature-item.toggle {
+            justify-content: space-between;
+            align-items: center;
+          }
+          .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+          }
+          .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+          }
+          .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 20px;
+          }
+          .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+          }
+          input:checked + .slider {
+            background-color: #f39c12;
+          }
+          input:checked + .slider:before {
+            transform: translateX(20px);
+          }
+          .dialog-price {
+            margin: 20px 0;
+            font-size: 18px;
+            color: #333;
+          }
+          .highlight {
+            display: block;
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 16px;
+          }
+          .price {
+            font-size: 24px;
+            font-weight: bold;
+          }
+          .dialog-button {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin: 10px 0;
+            transition: background 0.3s;
+          }
+          .dialog-button:hover {
+            background: #e67e22;
+          }
+          .dialog-cancel {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+          }
+        `;
+        document.head.appendChild(style);
+
+        // Close dialog
+        const closeButton = dialog.querySelector(".dialog-close");
+        closeButton.addEventListener("click", () => {
+          document.body.removeChild(dialog);
+          document.head.removeChild(style);
         });
-  
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          userId = userData.user.id;
-        } else {
-          console.error("Failed to fetch user data:", userResponse.statusText);
-        }
       }
-  
-      // Prepare the download history data
-      const downloadHistory = {
-        nguoi_dung_id: userId, // Will be null if user is not logged in
-        mau_powerpoint_id: isPowerpoint ? item.id : null, // PowerPoint ID if applicable
-        hinh_anh_id: !isPowerpoint ? item.id : null, // Image ID if applicable
-        // thoi_gian_tai is automatically set by the database
-      };
-  
-      // Send POST request to save download history
-      const response = await fetch("http://localhost:1000/lichsutaixuongs", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }), // Include token if user is logged in
-        },
-        body: JSON.stringify(downloadHistory),
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save download history");
-      }
-  
-      // Fetch the file as a blob
-      const fileResponse = await fetch(downloadUrl, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }), // Include token if required by the server
-        },
-      });
-  
-      if (!fileResponse.ok) {
-        throw new Error("Không thể tải tệp: " + fileResponse.statusText);
-      }
-  
-      const blob = await fileResponse.blob();
-      const url = window.URL.createObjectURL(blob);
-  
-      // Create a temporary link to download the file
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = item.tieu_de || (isPowerpoint ? "powerpoint" : "image"); // Set a meaningful file name
-      document.body.appendChild(link);
-      link.click();
-  
-      // Clean up
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error during download:", error.message);
-      alert(`Có lỗi xảy ra khi tải xuống: ${error.message}`);
+      alert(`Có lỗi xảy ra: ${error.message}`);
     }
   };
 
@@ -310,6 +445,11 @@ const PPTTemplate = () => {
             <h2>{item.tieu_de}</h2>
             <p><h3>Mẫu PowerPoint và Hình ảnh tải miễn phí</h3></p>
             <p>{item.mo_ta || "Không có mô tả."}</p>
+            {/* Hiển thị trạng thái la_pro và giá nếu la_pro = true */}
+            <p>Loại: <span className="text-highlight">{item.la_pro ? "Pro" : "Miễn phí"}</span></p>
+            {item.la_pro && item.gia && (
+              <p>Giá: <span className="text-highlight">{item.gia} VNĐ</span></p>
+            )}
             <p>
               Chủ đề: <span className="text-highlight">Lịch sử, Giáo dục, Đơn giản, Kế hoạch</span>
             </p>
@@ -465,7 +605,9 @@ const PPTTemplate = () => {
             <div className="card-category" key={index}>
               <img src={category.duong_dan_anh_nho} alt={category.tieu_de} className="template-img" />
               <div className="overlay">
-                {category.free && <span className="badge-free">Miễn phí</span>}
+                <span className={category.la_pro ? "badge-pro" : "badge-free"}>
+                  {category.la_pro ? "Pro" : "Miễn phí"}
+                </span>
                 <button className="download-btn">
                   <i className="bx bx-download"></i> PowerPoint
                 </button>
@@ -484,7 +626,9 @@ const PPTTemplate = () => {
             <div className="card-category-1" key={index}>
               <img src={category.duong_dan_anh_nho} alt={category.tieu_de} width={350} height={200} />
               <div className="overlay">
-                {category.free && <span className="badge-free">Miễn phí</span>}
+                <span className={category.la_pro ? "badge-pro" : "badge-free"}>
+                  {category.la_pro ? "Pro" : "Miễn phí"}
+                </span>
                 <button className="download-btn">Xem thêm về bộ sưu tập</button>
                 <p className="template-title">{category.tieu_de}</p>
               </div>
@@ -496,7 +640,9 @@ const PPTTemplate = () => {
             <div className="card-category-1" key={index}>
               <img src={category.duong_dan_anh_nho} alt={category.tieu_de} width={350} height={200} />
               <div className="overlay">
-                {category.free && <span className="badge-free">Miễn phí</span>}
+                <span className={category.la_pro ? "badge-pro" : "badge-free"}>
+                  {category.la_pro ? "Pro" : "Miễn phí"}
+                </span>
                 <button className="download-btn">Xem thêm về bộ sưu tập</button>
                 <p className="template-title">{category.tieu_de}</p>
               </div>

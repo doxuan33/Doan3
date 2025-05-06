@@ -78,9 +78,13 @@ a {
 a:hover {
 	text-decoration: none;
 }
+main {
+	margin-top: 70px; /* header 70px + navbar khoảng 70px */
+}
+
 /* HEADER */
 .header {
-	position: relative;
+	position: fixed;
 	width: 100%;
 	background: white;
 	z-index: 1000;
@@ -203,7 +207,7 @@ a:hover {
 }
 
 .search-form {
-  position: relative;
+  	position: relative;
 	display: flex;
 	align-items: center;
 	border: 2px solid #fff;
@@ -218,8 +222,6 @@ a:hover {
 	background: white;
 	border: 2px solid #cce3d0;
 	border-radius: 25px;
-	padding: 1rem;
-	width: 500px; /* Điều chỉnh kích thước phù hợp */
   }
   
   .dropdown-search {
@@ -256,12 +258,13 @@ a:hover {
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-	padding: 2.5rem;
+	padding: 3rem;
 }
 /* BANNER */
 .banner {
   background-size: cover;
   background-position: center;
+  padding-top: 155px;
 }
 .btn-search i {
 	font-size: 1.5rem;
@@ -577,6 +580,15 @@ a:hover {
 /* ********************************** */
 /*              FEATURES              */
 /* ********************************** */
+.top-categories{
+    background: white;
+    border-radius: 8px;
+}
+.top-categories-1{
+    background: white;
+    border-radius: 8px;
+	padding-top: 155px;
+}
 .container-features {
 	display: flex;
 	justify-content: center;
@@ -643,7 +655,7 @@ a:hover {
 .container-categories {
 	display: grid;
 	grid-template-columns: repeat(5, 1fr); /* Hiển thị 5 card trên 1 hàng */
-	gap: 2rem;
+	gap: 1.25rem;
 	justify-content: center;
 	width: 90%;
 	margin: 0 auto;
@@ -668,7 +680,7 @@ a:hover {
   }
   .card-category-1 {
 	position: relative;
-	width: 350px;
+	width: 325px;
 	height: auto;
 	border-radius: 10px;
 	overflow: hidden;
@@ -688,7 +700,30 @@ a:hover {
 	border-radius: 10px;
   }
   
-  /* Nhãn miễn phí - Luôn hiển thị góc trái trên */
+  .favorite-icon {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	font-size: 24px;
+	color: #f2f2f2;
+	cursor: pointer;
+	opacity: 0; /* Ẩn mặc định */
+	transition: opacity 0.3s ease, color 0.3s ease;
+  }
+  
+  .card-category:hover .favorite-icon,
+  .card-category-1:hover .favorite-icon {
+	opacity: 1; /* Hiển thị khi hover */
+  }
+  
+  .favorite-icon.pi-heart-fill {
+	color: #ff0000;
+  }
+  
+  .favorite-icon:hover {
+	color: #ff0000;
+  }
+  
   .badge-free {
 	position: absolute;
 	top: 10px;
@@ -701,14 +736,13 @@ a:hover {
 	border-radius: 5px;
   }
   
-  /* Overlay - Hiển thị khi hover */
   .overlay {
 	position: absolute;
 	top: 0;
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: rgba(0, 0, 0, 0.5); /* Làm tối */
+	background: rgba(0, 0, 0, 0.5);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -716,13 +750,11 @@ a:hover {
 	transition: opacity 0.3s ease;
   }
   
-  .card-category:hover .overlay {
-	opacity: 1;
-  }
+  .card-category:hover .overlay,
   .card-category-1:hover .overlay {
 	opacity: 1;
   }
-  /* Nút PowerPoint */
+  
   .download-btn {
 	background: orange;
 	color: white;
@@ -733,7 +765,6 @@ a:hover {
 	cursor: pointer;
   }
   
-  /* Tiêu đề - Hiển thị dưới khi hover */
   .template-title {
 	text-align: center;
 	font-size: 16px;
@@ -751,14 +782,37 @@ a:hover {
 	transition: opacity 0.3s ease;
   }
   
-  .card-category:hover .template-title {
-	opacity: 1;
-  }
+  .card-category:hover .template-title,
   .card-category-1:hover .template-title {
 	opacity: 1;
   }
   
-
+  @media (max-width: 768px) {
+	.container-categories {
+	  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	}
+  
+	.container-categories-1 {
+	  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	}
+  
+	.card-category,
+	.card-category-1 {
+	  width: 100%;
+	}
+  
+	.template-img {
+	  height: 200px;
+	}
+  
+	.template-title {
+	  font-size: 14px;
+	}
+  
+	.favorite-icon {
+	  font-size: 20px;
+	}
+  }
 /* ********************************** */
 /*               GALLERY              */
 /* ********************************** */
@@ -767,7 +821,6 @@ a:hover {
 	grid-template-columns: repeat(4, 1fr);
 	grid-template-rows: repeat(2, 30rem);
 	gap: 1.5rem;
-	margin-bottom: 3rem;
 	margin-top: 3rem;
 }
 
@@ -781,6 +834,134 @@ a:hover {
 	grid-column: 2/4;
 	grid-row: 1/3;
 }
+
+/* ********************************** */
+/*                BLOGS               */
+/* ********************************** */
+.blogs {
+	display: flex;
+	flex-direction: column;
+	gap: 2rem;
+	padding: 40px 80px;
+  }
+  
+  .container-blogs {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 2rem;
+  }
+  
+  .card-blog {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	background: #fff;
+	border-radius: 1rem;
+	overflow: hidden;
+	transition: transform 0.3s ease;
+  }
+  
+  .card-blog:hover {
+	transform: translateY(-5px);
+  }
+  
+  .card-blog .container-img {
+	border-radius: 1rem;
+	cursor: pointer;
+	position: relative;
+	overflow: hidden;
+  }
+  
+  .card-blog .container-img img {
+	width: 100%;
+	height: 300px;
+	object-fit: cover;
+  }
+  
+  .button-group-blog {
+	position: absolute;
+	bottom: 1rem;
+	right: -2.5rem;
+	display: flex;
+	gap: 0.5rem;
+	z-index: -1;
+	transition: all 0.3s ease;
+  }
+  
+  .card-blog:hover .button-group-blog {
+	z-index: 0;
+	right: 1rem;
+  }
+  
+  .button-group-blog span {
+	background-color: #fff;
+	padding: 0.8rem;
+	border-radius: 50%;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .button-group-blog span i {
+	font-size: 1.2rem;
+	color: #333;
+  }
+  
+  .button-group-blog span:hover {
+	background-color: var(--promary-color); /* Match primary color used in other sections */
+  }
+  
+  .button-group-blog span:hover i {
+	color: #fff;
+  }
+  
+  .content-blog {
+	padding: 1.5rem;
+  }
+  
+  .content-blog h3 {
+	font-size: 1.5rem;
+	margin-bottom: 0.8rem;
+	color: #333; /* Match dark color used in other sections */
+	font-weight: 500;
+	transition: color 0.3s ease;
+  }
+  
+  .content-blog h3:hover {
+	color: var(--promary-color); /* Match primary color */
+	cursor: pointer;
+  }
+  
+  .content-blog p {
+	margin-top: 0.5rem;
+	font-size: 1rem;
+	color: #666;
+	line-height: 1.5;
+  }
+  
+  .content-blog span {
+	color: var(--promary-color); /* Match primary color */
+	font-size: 0.9rem;
+  }
+  
+  .btn-read-more {
+	padding: 0.8rem 2rem;
+	background-color: var(--promary-color); /* Match primary color */
+	color: #fff;
+	text-transform: uppercase;
+	font-size: 0.9rem;
+	border-radius: 2rem;
+	margin: 1rem 0 2rem;
+	display: inline-block;
+	cursor: pointer;
+	transition: background-color 0.3s ease;
+  }
+  
+  .btn-read-more:hover {
+	background-color: var(--promary-color); /* Darker shade for hover effect */
+  }
 /* ********************************** */
 /*               FOOTER               */
 /* ********************************** */
@@ -1162,3 +1343,84 @@ a:hover {
 .left_content{
 	padding-left: 20px;
 }
+
+  
+  /* New styles for dropdown */
+  .menu-item {
+	position: relative;
+  }
+  
+  .dropdown-menu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	background-color: #fff;
+	border-radius: 8px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	padding: 15px;
+	z-index: 1000;
+	width: 600px; /* Adjust width to fit 4 columns */
+  }
+  
+  .dropdown-content {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr); /* 4 columns */
+	gap: 10px;
+  }
+  
+  .dropdown-content li {
+	margin-bottom: 5px;
+  }
+  
+  .dropdown-content a {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	text-decoration: none;
+	color: #393939;
+	font-size: 18px;
+	padding: 5px;
+	border-radius: 4px;
+  }
+  .dropdown-content a:hover {
+	background-color: #e6f0fa;
+	color: var(--promary-color);
+  }
+  .dropdown-content a span:hover {
+	color: var(--promary-color);
+  }
+  
+  .dropdown-content a span {
+	font-size: 12px;
+	color: #414141;
+  }
+  .contact-info ul,
+  .information ul,
+  .my-account ul {
+	list-style: none;
+	padding: 0;
+  }
+  
+  .contact-info li,
+  .information li,
+  .my-account li {
+	margin-bottom: 5px;
+  }
+  
+  .social-icons span {
+	margin-right: 10px;
+  }
+  
+  .newsletter input {
+	width: 100%;
+	padding: 5px;
+	margin-bottom: 10px;
+  }
+  
+  .copyright {
+	text-align: center;
+	margin-top: 20px;
+  }

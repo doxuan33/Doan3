@@ -3,6 +3,7 @@ import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Dropdown } from "primereact/dropdown";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { Button } from "primereact/button";
+import { InputText } from "primereact/inputtext";
 import axios from "axios";
 import HomePage from "./HomePage";
 import AboutPage from "./AboutPage";
@@ -10,24 +11,38 @@ import NotFound from "./NotFound";
 import PptPage from "./PptPage";
 import PngPage from "./PngPage";
 import LoginPage from "./LoginPage";
-import UserPage from "./UserPage"; // Import UserPage
-
+import UserPage from "./UserPage";
+// import ImageEditor from "./ImageEditor";
+import AIPage from "./AIPage";
 function App() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [user, setUser] = useState(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const isLoginPage = location.pathname === "/login";
   const op = useRef(null);
 
-  // Hàm nhận dữ liệu người dùng từ LoginPage
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get("http://localhost:1000/danhmucs");
+        setCategories(response.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const handleLoginSuccess = (userData) => {
     setUser(userData);
   };
 
-  // Kiểm tra trạng thái đăng nhập khi component khởi tạo
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -47,7 +62,6 @@ function App() {
     }
   }, []);
 
-  // Xử lý scroll
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 100);
@@ -55,9 +69,59 @@ function App() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!selectedCategory) {
+      setSelectedCategory({ label: "PowerPoint", value: 1, to: "/ppt" });
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) {
+        params.append("search", searchQuery);
+      }
+
+      const queryParams = new URLSearchParams(location.search);
+      const categoryFromUrl = queryParams.get("category");
+      if (categoryFromUrl) {
+        const matchedCategory = categories.find(
+          (cat) => cat.ten.toLowerCase() === categoryFromUrl.toLowerCase()
+        );
+        if (matchedCategory) {
+          params.append("danh_muc_id", matchedCategory.id);
+        }
+      }
+
+      if (selectedCategory?.value === 1 || (!selectedCategory && location.pathname === "/ppt")) {
+        const response = await axios.get(
+          `http://localhost:1000/maupowerpoints?${params.toString()}`
+        );
+        navigate("/ppt", {
+          state: { searchResults: response.data, searchQuery },
+          replace: true,
+        });
+      } else if (selectedCategory?.value === 2 || (!selectedCategory && location.pathname === "/png")) {
+        const response = await axios.get(
+          `http://localhost:1000/hinhanhs?${params.toString()}`
+        );
+        navigate("/png", {
+          state: { searchResults: response.data, searchQuery },
+          replace: true,
+        });
+      } else if (selectedCategory?.value === 3) {
+        navigate("/about");
+      }
+    } catch (error) {
+      console.error("Lỗi khi tìm kiếm:", error);
+      navigate(selectedCategory?.value === 1 ? "/ppt" : "/png", {
+        state: { searchResults: [], searchQuery },
+      });
+    }
+  };
 
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.value);
+    setSearchQuery("");
   };
 
   const handleLogout = () => {
@@ -82,13 +146,18 @@ function App() {
     op.current.hide();
   };
 
-  // Hàm xử lý click vào biểu tượng user hoặc avatar
   const handleUserClick = () => {
     if (user) {
-      navigate("/user"); // Chuyển hướng đến UserPage nếu đã đăng nhập
+      navigate("/user");
     } else {
-      navigate("/login"); // Chuyển hướng đến LoginPage nếu chưa đăng nhập
+      navigate("/login");
     }
+  };
+
+  const handleCategoryClick = (category) => {
+    setShowDropdown(false);
+    setSearchQuery("");
+    navigate(`/ppt?category=${encodeURIComponent(category.ten)}`);
   };
 
   return (
@@ -120,7 +189,7 @@ function App() {
                       if (!op.current?.isVisible()) hideOverlay();
                     }, 100);
                   }}
-                  onClick={handleUserClick} // Thêm sự kiện click
+                  onClick={handleUserClick}
                   aria-label="User profile"
                 >
                   <i className="bx bxs-user"></i>
@@ -147,7 +216,7 @@ function App() {
                           src="https://png.pngtree.com/png-clipart/20200701/original/pngtree-cat-default-avatar-png-image_5416936.jpg"
                           alt="Avatar"
                           style={{ borderRadius: "50%", width: "50px", height: "50px", cursor: "pointer" }}
-                          onClick={handleUserClick} // Thêm sự kiện click vào avatar
+                          onClick={handleUserClick}
                         />
                         <h3 style={{ margin: "5px 0", fontSize: "16px" }}>{user.ten}</h3>
                         <p style={{ margin: "0", fontSize: "12px", color: "#666" }}>
@@ -258,28 +327,55 @@ function App() {
             <nav className="navbar container">
               <i className="fa-solid fa-bars"></i>
               <ul className="menu">
-                <li><a href="/">Trang chủ</a></li>
-                <li><a href="/ppt">PowerPoint</a></li>
+                <li><a href="/">XPOINT</a></li>
+                <li
+                  className="menu-item"
+                  onMouseEnter={() => setShowDropdown(true)}
+                  onMouseLeave={() => setShowDropdown(false)}
+                >
+                  <a href="/ppt">PowerPoint</a>
+                  {showDropdown && (
+                    <div
+                      className="dropdown-menu"
+                      onMouseEnter={() => setShowDropdown(true)}
+                      onMouseLeave={() => setShowDropdown(false)}
+                    >
+                      {categories.length > 0 ? (
+                        <ul className="dropdown-content">
+                          {categories.map((category) => (
+                            <li key={category.id} > 
+                              <a 
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleCategoryClick(category);
+                                }}
+                              >
+                                 <span className="text">{category.ten}</span>
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>Loading categories...</p>
+                      )}
+                    </div>
+                  )}
+                </li>
                 <li><a href="/png">Hình ảnh</a></li>
-                <li><a href="/about">Hình Nền</a></li>
-                <li><a href="/notfound">Mẫu</a></li>
+                {/* <li><a href="/about">Khung viền</a></li>
+                <li><a href="/notfound">Mẫu</a></li> */}
               </ul>
-              <form className="search-form">
+              <form className="search-form" onSubmit={handleSearch}>
                 <div className="search-box">
-                  <Dropdown
-                    value={selectedCategory}
-                    options={[
-                      { label: "PowerPoint", value: 1, to: "/ppt" },
-                      { label: "Hình ảnh PNG", value: 2, to: "/png" },
-                      { label: "Hình nền", value: 3, to: "/about" }
-                    ]}
-                    optionLabel="label"
-                    placeholder="Powerpoint"
-                    onChange={handleCategoryChange}
-                    className="dropdown-search"
+                  
+                  <input type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Tìm kiếm..."
+                    className="search-input"
                   />
-                  <input type="search" placeholder="Tìm kiếm.." className="search-input" />
-                  <button className="btn-search">
+                  <button type="submit" className="btn-search">
                     <i className="bx bx-search-alt"></i>
                   </button>
                 </div>
@@ -288,7 +384,6 @@ function App() {
           </div>
         </header>
       )}
-
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
@@ -296,7 +391,9 @@ function App() {
         <Route path="/ppt" element={<PptPage />} />
         <Route path="/png" element={<PngPage />} />
         <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
-        <Route path="/user" element={<UserPage />} /> {/* Thêm route cho UserPage */}
+        <Route path="/user" element={<UserPage />} />
+        {/* <Route path="/editor" element={<ImageEditor />} /> */}
+        <Route path="/ai" element={<AIPage />} />
       </Routes>
 
       {!isLoginPage && (

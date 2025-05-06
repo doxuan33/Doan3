@@ -14,15 +14,6 @@ const PrivateRoute = ({ children }) => {
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <>
-    <head>
-        
-		    <link rel="shortcut icon" href="/img/logo.png" type="image/x-icon"></link>
-        <title>XPoint</title>
-        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'></link>
-        <script src="https://kit.fontawesome.com/a076d05399.js" crossOrigin="anonymous"></script>
-        <script src="https://app.embed.im/whatsapp.js" data-phone="" data-theme="1" defer></script>
-        
-      </head>
     <div>
         <BrowserRouter>
         <App />
